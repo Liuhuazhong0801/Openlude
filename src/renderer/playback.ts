@@ -22,11 +22,13 @@ export class LaunchPlayback {
     const icon = this.emblem.querySelector<HTMLImageElement>("img");
     if (settings.showAppIcon && icon?.getAttribute("src"))
       await icon.decode().catch(() => {});
+    await this.scene?.preparePlayback();
     if (generation !== this.generation) return;
-    const effective = {
+    const identity = {
       ...settings,
       showAppIcon: settings.showAppIcon && !!icon?.naturalWidth,
     };
+    const effective = this.scene?.playbackSettings(identity) ?? identity;
     this.emblem.hidden = !effective.showAppIcon;
     this.emblem.style.transform = "translate(-50%, -50%)";
     const start = performance.now();

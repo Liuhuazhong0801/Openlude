@@ -38,7 +38,7 @@ async function boot() {
   const application = await electron.launch({
     args: [root],
     cwd: root,
-    env: { ...process.env, TIMEGATE_TEST_DATA: path.join(run, "state") },
+    env: { ...process.env, OPENLUDE_TEST_DATA: path.join(run, "state") },
     timeout: 30000,
     recordVideo: {
       dir: path.join(run, "video"),
@@ -53,6 +53,7 @@ async function boot() {
     });
   });
   const page = await application.firstWindow();
+  await page.emulateMedia({ colorScheme: null });
   try {
     await page.waitForSelector("#add-app", { timeout: 12000 });
   } catch (error) {
@@ -66,7 +67,7 @@ async function boot() {
   return { application, page };
 }
 async function fixture() {
-  const bundle = path.join(run, "TimeGate Launch Fixture.app");
+  const bundle = path.join(run, "Openlude Launch Fixture.app");
   const contents = path.join(bundle, "Contents");
   await fs.mkdir(path.join(contents, "MacOS"), { recursive: true });
   await fs.mkdir(path.join(contents, "Resources"), { recursive: true });
@@ -77,7 +78,7 @@ async function fixture() {
   );
   await fs.writeFile(
     path.join(contents, "Info.plist"),
-    `<?xml version="1.0"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>studio.timegate.fixture</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleIconFile</key><string>fixture.png</string><key>CFBundleName</key><string>TimeGate Launch Fixture</string><key>CFBundlePackageType</key><string>APPL</string></dict></plist>`,
+    `<?xml version="1.0"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>studio.openlude.fixture</string><key>CFBundleExecutable</key><string>fixture</string><key>CFBundleIconFile</key><string>fixture.png</string><key>CFBundleName</key><string>Openlude Launch Fixture</string><key>CFBundlePackageType</key><string>APPL</string></dict></plist>`,
   );
   const swift = `import Cocoa
 class Delegate: NSObject, NSApplicationDelegate {
@@ -87,7 +88,7 @@ class Delegate: NSObject, NSApplicationDelegate {
  func applicationDidFinishLaunching(_ notification: Notification) {
   write("fixture-started", String(ProcessInfo.processInfo.processIdentifier))
   window = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 500, height: 300), styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-  window.title = "TimeGate 启动验证"
+  window.title = "Openlude 启动验证"
   let label = NSTextField(labelWithString: "目标应用已打开")
   label.font = NSFont.systemFont(ofSize: 26)
   label.frame = NSRect(x: 120, y: 130, width: 300, height: 50)
@@ -142,7 +143,12 @@ async function traceReveals() {
         void this.webContents
           .executeJavaScript(`({
           canvas: document.querySelectorAll('canvas.motion-canvas').length,
-          emblem: Number(getComputedStyle(document.querySelector('.app-emblem')).opacity)
+          emblem: Number(getComputedStyle(document.querySelector('.app-emblem')).opacity),
+          video: document.querySelector('video') ? {
+            time: document.querySelector('video').currentTime,
+            paused: document.querySelector('video').paused,
+            rate: document.querySelector('video').playbackRate
+          } : null
         })`)
           .then((content) => {
             globalThis.revealContent[this.id] = content;
@@ -178,7 +184,7 @@ try {
   desktop = first.application;
   await traceReveals();
   let page = first.page;
-  assert.deepEqual((await page.evaluate(() => window.timegate.state())).targets, []);
+  assert.deepEqual((await page.evaluate(() => window.openlude.state())).targets, []);
   assert.equal(await page.locator(".app-card").count(), 0);
   assert.equal(await page.locator("#empty-workspace").isVisible(), true);
   for (const selector of ["#target-header", "#theme-section", "#preview-section", "#settings"])
@@ -192,7 +198,7 @@ try {
     otherBundle = path.join(run, "Other Fixture.app");
     await fs.cp(bundle, otherBundle, { recursive: true });
     const plist = path.join(otherBundle, "Contents/Info.plist");
-    await fs.writeFile(plist, (await fs.readFile(plist, "utf8")).replace("studio.timegate.fixture", "studio.timegate.other"));
+    await fs.writeFile(plist, (await fs.readFile(plist, "utf8")).replace("studio.openlude.fixture", "studio.openlude.other"));
     await fs.copyFile(path.join(root, "public/assets/apps/codex.png"), path.join(otherBundle, "Contents/Resources/fixture.png"));
   } else otherBundle = path.join(process.env.SystemRoot, "System32/cmd.exe");
   for (const [index, file] of [bundle, otherBundle].entries()) {
@@ -202,11 +208,11 @@ try {
     await page.locator(index === 0 ? "#add-first-app" : "#add-app").click();
     await until(async () => (await page.locator(".app-card").count()) === index + 1);
   }
-  const initial = await page.evaluate(() => window.timegate.state());
+  const initial = await page.evaluate(() => window.openlude.state());
   const primary = initial.targets[0];
   const secondary = initial.targets[1];
   await page.locator(`[data-id="${primary.id}"] [data-action="select"]`).click();
-  assert.equal(await page.locator(".theme-card").count(), 5);
+  assert.equal(await page.locator(".theme-card").count(), 6);
   assert.equal(await page.locator(".fallback-stage").count(), 0);
   assert.equal(await page.locator("#empty-workspace").isHidden(), true);
   assert.equal(await page.locator("#locate-target, .launch-button, [data-action=launch], #launch-target svg").count(), 0);
@@ -216,6 +222,53 @@ try {
   assert.equal(await page.locator("#preview-icon").getAttribute("src"), primary.icon);
   assert.equal((await page.locator("#preview-stage").innerText()).trim(), "");
   check("Adding local apps enables the workspace, keeps app identity icons and removes location/launch arrows");
+  assert.equal(await page.locator(".binding-section, #workspace-footer, #nav-help, #version").count(), 0);
+  await page.locator(".titlebar").hover();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".remove-app")).opacity === "0");
+  assert.equal(await page.locator(".remove-app").first().evaluate(el => getComputedStyle(el).opacity), "0");
+  await page.locator(".app-card").first().hover();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector(".remove-app")).opacity === "1");
+  check("Only app identity remains in the list; delete appears on hover; binding area and footer hints are removed");
+  await page.locator("#nav-settings").click();
+  await page.waitForSelector("#general-settings:not([hidden])");
+  assert.equal(await page.locator("dialog#general-settings").count(), 0);
+  assert.equal(await page.locator(".content").isHidden(), true);
+  assert.equal(await page.locator("#settings").isHidden(), true);
+  assert.equal(await page.locator("#appearance").inputValue(), "system");
+  await page.locator("#appearance").selectOption("dark");
+  await page.waitForFunction(() => matchMedia("(prefers-color-scheme: dark)").matches);
+  await page.screenshot({ path: path.join(run, "settings-dark.png") });
+  await page.locator("#appearance").selectOption("light");
+  await page.waitForFunction(() => !matchMedia("(prefers-color-scheme: dark)").matches);
+  await page.screenshot({ path: path.join(run, "settings-light.png") });
+  await page.locator("#appearance").selectOption("system");
+  await until(async () => (await desktop.evaluate(({ nativeTheme }) => nativeTheme.themeSource)) === "system");
+  check("Bottom-left settings open a full page, switch light/dark immediately and restore follow-system mode");
+  // Validate native login-item calls without modifying the developer's real login items.
+  await desktop.evaluate(({ app, net }) => {
+    globalThis.originalSetLogin = app.setLoginItemSettings;
+    globalThis.loginRequests = [];
+    app.setLoginItemSettings = value => globalThis.loginRequests.push(value);
+    globalThis.originalFetch = net.fetch;
+    net.fetch = async () => ({ status: 404, ok: false });
+  });
+  await page.locator("#auto-start").check();
+  await until(async () => (await page.evaluate(() => window.openlude.state())).settings.autoStart);
+  await page.locator("#auto-start").uncheck();
+  await until(async () => !(await page.evaluate(() => window.openlude.state())).settings.autoStart);
+  assert.deepEqual(await desktop.evaluate(() => globalThis.loginRequests.map(r => r.openAtLogin)), [true, false]);
+  await page.locator("#auto-check-updates").uncheck();
+  await until(async () => !(await page.evaluate(() => window.openlude.state())).settings.autoCheckUpdates);
+  await page.locator("#check-update").click();
+  await page.waitForFunction(() => document.querySelector("#update-status").textContent === "尚未发布正式版本");
+  await desktop.evaluate(({ net }) => { net.fetch = async () => { throw new Error("offline test"); }; });
+  await page.locator("#check-update").click();
+  await page.waitForFunction(() => document.querySelector("#update-status").textContent.includes("无法检查更新"));
+  await desktop.evaluate(({ app, net }) => { app.setLoginItemSettings = globalThis.originalSetLogin; net.fetch = globalThis.originalFetch; });
+  check("Settings persist login-item requests and auto-update preference; missing releases and offline errors are handled");
+  await page.locator("#back-to-workspace").click();
+  assert.equal(await page.locator("#general-settings").isHidden(), true);
+  assert.equal(await page.locator(".content").isVisible(), true);
   await desktop.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()[0].setSize(1120, 760),
   );
@@ -258,7 +311,7 @@ try {
   await page.locator(`[data-id="${primary.id}"] [data-action="select"]`).click();
   assert.equal(await page.locator("#duration").inputValue(), "2600");
   assert.equal(
-    (await page.evaluate(() => window.timegate.state())).targets[0].preferences,
+    (await page.evaluate(() => window.openlude.state())).targets[0].preferences,
     undefined,
   );
   check(
@@ -270,13 +323,13 @@ try {
   assert.equal(await page.locator("#show-app-icon").isChecked(), true);
   await page.locator(`[data-id="${primary.id}"] [data-action="select"]`).click();
   assert.equal(await page.locator("#show-app-icon").isChecked(), false);
-  assert.equal((await page.evaluate(() => window.timegate.state())).targets[0].preferences, undefined);
+  assert.equal((await page.evaluate(() => window.openlude.state())).targets[0].preferences, undefined);
   await page.locator("#show-app-icon").check();
   check("App icon visibility is an independent per-app draft until saved");
   for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
     await page.locator(`.theme-card[data-theme="${theme}"]`).click();
     await page.locator("#play").click();
-    await delay(900);
+    await delay(1150);
     const box = await page.locator("#preview-stage").boundingBox();
     const clip = {
       x: box.x + box.width * 0.2,
@@ -294,7 +347,21 @@ try {
     await page.waitForFunction(() => !document.querySelector("#play").disabled);
     check(`Procedural motion changes pixels outside the logo: ${theme}`);
   }
+  await page.locator('.theme-card[data-theme="maple"]').click();
+  assert.equal(await page.locator("#duration-setting").isHidden(), true);
+  assert.equal(await page.locator("#fixed-duration").isVisible(), true);
+  assert.equal(await page.locator("#time-label").innerText(), "4.9 秒");
+  assert.equal(await page.locator('.theme-card[data-theme="maple"] img').evaluate(img => img.naturalWidth), 3840);
+  assert.equal(await page.locator("video").count(), 0);
+  await page.locator("#play").click();
+  await delay(1200);
+  const mapleEarly = await page.locator("#preview-stage").screenshot();
+  await delay(650);
+  const mapleLate = await page.locator("#preview-stage").screenshot({ path: path.join(run, "maple.png") });
+  assert.equal(mapleEarly.equals(mapleLate), false);
   await page.locator('.theme-card[data-theme="portal"]').click();
+  assert.equal(await page.locator("#duration").inputValue(), "2600");
+  check("Maple uses the supplied 4K image with moving camera/leaves, no video, and preserves other theme durations");
   const previewWindow = desktop.waitForEvent("window");
   await page.locator("#fullscreen").click();
   const overlay = await previewWindow;
@@ -310,7 +377,7 @@ try {
   );
   assert.equal(await overlay.locator("#launch-label").count(), 0);
   const previewPayload = await overlay.evaluate(() =>
-    window.timegate.overlayPayload(),
+    window.openlude.overlayPayload(),
   );
   assert.equal(previewPayload.duration, 2600);
   assert.equal(previewPayload.preview, true);
@@ -363,7 +430,7 @@ try {
   const hiddenIconOverlay = await hiddenIconWindow;
   await hiddenIconOverlay.waitForSelector("#skip");
   assert.equal(await hiddenIconOverlay.locator(".app-emblem").isHidden(), true);
-  const hiddenIconPayload = await hiddenIconOverlay.evaluate(() => window.timegate.overlayPayload());
+  const hiddenIconPayload = await hiddenIconOverlay.evaluate(() => window.openlude.overlayPayload());
   assert.equal(hiddenIconPayload.showAppIcon, false);
   await hiddenIconOverlay.waitForEvent("close");
   await until(() => page.locator("#fullscreen").isEnabled());
@@ -391,7 +458,7 @@ try {
     await page.locator("#apply").click();
     await until(
       async () =>
-        (await page.evaluate(() => window.timegate.state())).targets.find(
+        (await page.evaluate(() => window.openlude.state())).targets.find(
           (t) => t.id === target.id,
         ).theme === "portal",
     );
@@ -424,7 +491,7 @@ try {
       await fs.readFile(path.join(run, "fixture-started"), "utf8"),
     );
     const duplicate = await page.evaluate(
-      (id) => window.timegate.launch(id),
+      (id) => window.openlude.launch(id),
       target.id,
     );
     assert.equal(duplicate.ok, false);
@@ -453,7 +520,7 @@ try {
       "Real macOS app starts; duplicate launch is rejected; overlay is removed",
       `${Date.now() - start}ms`,
     );
-    if (process.env.TIMEGATE_SKIP_FOCUS_ASSERT === "1") {
+    if (process.env.OPENLUDE_SKIP_FOCUS_ASSERT === "1") {
       report.pending.push(
         "Foreground focus was not asserted; requires an unlocked interactive desktop",
       );
@@ -488,9 +555,56 @@ try {
       );
       check("The target is already active behind the overlay when the fade begins");
     }
+    await page.locator('.theme-card[data-theme="maple"]').click();
+    await page.locator("#apply").click();
+    await until(() => page.locator("#apply").isDisabled());
+    const mapleWindow = desktop.waitForEvent("window");
+    const mapleStart = Date.now();
+    await page.locator("#launch-target").click();
+    const mapleOverlay = await mapleWindow;
+    const mapleId = await desktop.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith("/overlay.html")).id);
+    const mapleEnd = mapleOverlay.waitForEvent("close", { timeout: 22000 });
+    await mapleOverlay.waitForSelector("canvas.motion-canvas");
+    const maplePayload = await mapleOverlay.evaluate(() => window.openlude.overlayPayload());
+    assert.equal(maplePayload.duration, 4900);
+    assert.equal(maplePayload.preview, false);
+    assert.equal(await mapleOverlay.locator("video").count(), 0);
+    await mapleEnd;
+    const mapleElapsed = Date.now() - mapleStart;
+    assert.ok(mapleElapsed > 4500 && mapleElapsed < 8000, `Maple launch lasted ${mapleElapsed}ms`);
+    const mapleTrace = await revealTrace(mapleId);
+    assertReveal(mapleTrace, 650);
+    assert.ok(mapleTrace.frames.early && mapleTrace.frames.late);
+    assert.notEqual(mapleTrace.frames.early, mapleTrace.frames.late);
+    await fs.writeFile(path.join(run, "maple-reveal.json"), JSON.stringify({
+      ...mapleTrace, frames: undefined, elapsed: mapleElapsed,
+    }, null, 2));
+    if (process.env.OPENLUDE_SKIP_FOCUS_ASSERT !== "1") {
+      const foreground = await exec(path.join(bundle, "Contents/MacOS/fixture"), ["--probe-frontmost"]);
+      assert.equal(Number(foreground.stdout.trim()), fixturePid);
+    }
+    check("Maple launch uses 4 seconds of motion plus a fading icon, keeps moving during reveal, and hands focus to the target");
+    await until(() => page.locator("#launch-target").isEnabled());
+    const skipMapleWindow = desktop.waitForEvent("window");
+    const skipMapleRun = page.evaluate(id => window.openlude.preview("maple", id, {
+      duration: 1800, reducedMotion: false, showAppIcon: false,
+    }), primary.id);
+    const skipMaple = await skipMapleWindow;
+    await skipMaple.waitForSelector("canvas.motion-canvas");
+    assert.equal((await skipMaple.evaluate(() => window.openlude.overlayPayload())).duration, 4000);
+    const skipMapleEnd = skipMaple.waitForEvent("close");
+    const skipMapleStart = Date.now();
+    await skipMaple.keyboard.press("Escape").catch(error => {
+      if (!String(error).includes("has been closed")) throw error;
+    });
+    await skipMapleEnd;
+    assert.ok(Date.now() - skipMapleStart < 1000);
+    assert.equal((await skipMapleRun).ok, true);
+    check("Maple without an icon uses four seconds, and Escape releases it immediately");
     await fs.rename(bundle, bundle + ".moved");
     const missing = await page.evaluate(
-      (id) => window.timegate.launch(id),
+      (id) => window.openlude.launch(id),
       target.id,
     );
     assert.equal(missing.ok, false);
@@ -547,7 +661,7 @@ try {
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(path.dirname(settingsFile), backups[0]), "utf8")), legacy);
   check("Upgrade backs up v1, removes unbound presets and preserves local bindings/custom apps");
   // Stub only the OS URL opener for a preserved custom legacy target; no network opens.
-  await page.evaluate(() => window.timegate.bind("legacy-slow", "portal", {
+  await page.evaluate(() => window.openlude.bind("legacy-slow", "portal", {
     duration: 600, reducedMotion: false, showAppIcon: false,
   }));
   await desktop.evaluate(({ shell }) => {
@@ -558,7 +672,7 @@ try {
   });
   for (const skip of [true, false]) {
     const pendingWindow = desktop.waitForEvent("window");
-    const pendingLaunch = page.evaluate(() => window.timegate.launch("legacy-slow"));
+    const pendingLaunch = page.evaluate(() => window.openlude.launch("legacy-slow"));
     const waitingOverlay = await pendingWindow;
     await waitingOverlay.waitForSelector("#skip");
     const waitingClose = waitingOverlay.waitForEvent("close");
@@ -582,7 +696,7 @@ try {
 
   const reducedWindow = desktop.waitForEvent("window");
   const reducedRun = page.evaluate((id) =>
-    window.timegate.preview("portal", id, {
+    window.openlude.preview("maple", id, {
       duration: 1800, reducedMotion: true, showAppIcon: true,
     }), primary.id,
   );
@@ -595,13 +709,14 @@ try {
   assert.equal((await reducedRun).ok, true);
   const reducedTrace = await revealTrace(reducedId);
   assertReveal(reducedTrace, 160);
+  assert.equal(reducedTrace.content.video, null);
   assert.ok(reducedTrace.samples.at(-1).at - reducedTrace.samples[0].at < 400);
-  check("Reduced motion uses a short reveal after the icon intro");
+  check("Reduced motion uses a static maple frame and a short reveal after the icon intro");
   await desktop.close();
   desktop = null;
   const second = await boot();
   desktop = second.application;
-  const restored = await second.page.evaluate(() => window.timegate.state());
+  const restored = await second.page.evaluate(() => window.openlude.state());
   assert.equal(
     restored.targets.find((t) => t.id === primary.id).preferences.duration,
     2600,
@@ -610,13 +725,16 @@ try {
   assert.equal(restored.targets.find((t) => t.id === primary.id).preferences.showAppIcon, process.platform === "darwin");
   if (process.platform === "darwin")
     assert.equal(
-      restored.targets.find((t) => t.name === "TimeGate Launch Fixture").theme,
-      "portal",
+      restored.targets.find((t) => t.name === "Openlude Launch Fixture").theme,
+      "maple",
     );
-  check("Preferences and theme bindings survive restart");
+  assert.equal(restored.settings.appearance, "system");
+  assert.equal(restored.settings.autoCheckUpdates, false);
+  check("Preferences, general settings and theme bindings survive restart");
   while (await second.page.locator(".app-card").count()) {
     const count = await second.page.locator(".app-card").count();
-    await second.page.locator("#remove-target").click();
+    await second.page.locator(".app-card").first().hover();
+    await second.page.locator(".remove-app").first().click();
     await until(async () => (await second.page.locator(".app-card").count()) === count - 1);
   }
   assert.equal(await second.page.locator("#empty-workspace").isVisible(), true);
@@ -624,7 +742,7 @@ try {
   desktop = null;
   const emptyRestart = await boot();
   desktop = emptyRestart.application;
-  assert.deepEqual((await emptyRestart.page.evaluate(() => window.timegate.state())).targets, []);
+  assert.deepEqual((await emptyRestart.page.evaluate(() => window.openlude.state())).targets, []);
   assert.equal(await emptyRestart.page.locator("#empty-workspace").isVisible(), true);
   check("Removing all apps restores the welcome screen; restart never repopulates presets");
   assert.deepEqual(errors, []);

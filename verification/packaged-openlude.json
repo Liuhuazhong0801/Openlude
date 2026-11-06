@@ -1,0 +1,34 @@
+{
+  "version": "0.3.0",
+  "platform": "macOS arm64",
+  "product": "Openlude",
+  "bundleIdentifier": "studio.openlude.desktop",
+  "oldConfigurationPreserved": true,
+  "migratedConfigurationIdentical": true,
+  "savedAppNames": [
+    "ChatGPT"
+  ],
+  "savedPreferences": [
+    {
+      "theme": "portal",
+      "duration": 3000,
+      "reducedMotion": false,
+      "showAppIcon": false
+    }
+  ],
+  "checks": [
+    "Packaged app opens with Openlude title and version 0.3.0",
+    "Existing ChatGPT binding preserved without saving test changes",
+    "4-second original-image maple preview plays and completes",
+    "Bottom-left settings opens a full page with the sidebar retained",
+    "System appearance is followed",
+    "Update check reports no formal release",
+    "macOS app signature integrity verified",
+    "Packaged app-update.yml points to the public Openlude repository"
+  ],
+  "limits": [
+    "Local ad-hoc signature, not notarized",
+    "No signed cross-version update install was performed",
+    "Windows native UI and login behavior require Windows acceptance"
+  ]
+}

@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { allowedApplication, decodeState, initialState, preferences, themeId } from "./model";
-import { animationDuration, animationFrame } from "../shared/transition";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { copyLegacySettings } from "./migration";
+import { allowedApplication, decodeState, initialState, generalSettings, preferences, themeId } from "./model";
+import { animationDuration, animationFrame, playbackPreferences, MAPLE_MOTION_DURATION } from "../shared/transition";
 test("platform paths support spaces and Unicode, reject executable substitutions", () => {
   assert.equal(allowedApplication("/Applications/豆包.app", "darwin"), true);
   assert.equal(
@@ -87,7 +91,9 @@ test("the app icon is optional, defaults on for old settings and rejects invalid
 test("identity precedes motion and motion continues during the reveal", () => {
   const settings = { duration: 1800, reducedMotion: false, showAppIcon: true };
   const intro = animationFrame(200, settings);
-  assert.equal(intro.iconOpacity, 1);
+  assert.ok(intro.iconOpacity > 0 && intro.iconOpacity < 1);
+  assert.ok(animationFrame(100, settings).iconOpacity < intro.iconOpacity);
+  assert.equal(animationFrame(350, settings).iconOpacity, 1);
   assert.equal(intro.sceneOpacity, 0);
   const motion = animationFrame(900, settings);
   assert.equal(motion.iconOpacity, 0);
@@ -107,6 +113,17 @@ test("fresh installs start with no preselected applications", () => {
   assert.deepEqual(state.targets, []);
   assert.equal(state.preferences.showAppIcon, true);
 });
+test("image-based themes use four seconds without changing other saved durations", () => {
+  const saved = { duration: 1800, showAppIcon: true, reducedMotion: false };
+  assert.equal(themeId("maple"), "maple");
+  const motion = playbackPreferences("maple", saved);
+  assert.equal(motion.duration, MAPLE_MOTION_DURATION + 900);
+  assert.equal(animationFrame(900, motion).motionProgress, 0);
+  assert.equal(playbackPreferences("maple", { ...saved, showAppIcon: false }).duration, MAPLE_MOTION_DURATION);
+  assert.equal(animationDuration(playbackPreferences("maple", { ...saved, reducedMotion: true })), 650);
+  assert.equal(playbackPreferences("portal", saved).duration, 1800);
+  assert.equal(saved.duration, 1800);
+});
 test("legacy starter entries are retired while local bindings and custom apps survive", () => {
   const local = { id: "codex", name: "Codex", path: "/Applications/Codex.app", theme: "portal", builtin: true,
     preferences: { duration: 3000, reducedMotion: false, showAppIcon: false } };
@@ -125,4 +142,34 @@ test("legacy starter entries are retired while local bindings and custom apps su
   assert.deepEqual(migrated.targets[0].preferences, local.preferences);
   assert.deepEqual(decodeState(migrated), migrated);
   assert.throws(() => decodeState({ ...migrated, version: 3 }));
+});
+
+test("general settings default to the system theme and validate persisted changes", () => {
+  assert.deepEqual(generalSettings(), { appearance: "system", autoStart: false, autoCheckUpdates: true });
+  assert.equal(generalSettings({ appearance: "dark", autoStart: true, autoCheckUpdates: false }).appearance, "dark");
+  for (const value of [null, { appearance: "auto", autoStart: false, autoCheckUpdates: true }, { appearance: "light", autoStart: "yes", autoCheckUpdates: true }])
+    assert.throws(() => generalSettings(value));
+});
+
+test("product rename copies valid legacy settings once without overwriting either copy", async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "openlude-migration-"));
+  try {
+    const source = path.join(directory, "legacy.json");
+    const destination = path.join(directory, "Openlude", "settings.json");
+    assert.equal(await copyLegacySettings(destination, source), false);
+    const original = JSON.stringify({ ...initialState(false), targets: [{
+      id: "existing", name: "Existing App", path: "/Applications/Existing App.app", theme: "ink",
+      preferences: { duration: 2400, reducedMotion: false, showAppIcon: false },
+    }] });
+    await fs.writeFile(source, original);
+    assert.equal(await copyLegacySettings(destination, source), true);
+    assert.equal(await fs.readFile(destination, "utf8"), original);
+    assert.equal(await fs.readFile(source, "utf8"), original);
+    await fs.writeFile(source, "invalid");
+    assert.equal(await copyLegacySettings(destination, source), false);
+    assert.equal(await fs.readFile(destination, "utf8"), original);
+    await fs.rm(destination);
+    await assert.rejects(copyLegacySettings(destination, source));
+    await assert.rejects(fs.access(destination));
+  } finally { await fs.rm(directory, { recursive: true, force: true }); }
 });

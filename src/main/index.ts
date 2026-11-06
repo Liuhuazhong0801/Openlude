@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   systemPreferences,
+  nativeTheme,
   screen,
   shell,
   type IpcMainInvokeEvent,
@@ -15,10 +16,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { allowedApplication, decodeState, initialState, preferences, themeId } from "./model";
+import { allowedApplication, decodeState, generalSettings, initialState, preferences, themeId } from "./model";
+import { copyLegacySettings } from "./migration";
+import { PROJECT_URL, UpdateManager } from "./updates";
 import { applicationIcon } from "./icons";
 import { fadeWindowOut } from "./transition";
-import { QUICK_REVEAL_DURATION, revealDuration } from "../shared/transition";
+import { playbackPreferences, QUICK_REVEAL_DURATION, revealDuration } from "../shared/transition";
 import type {
   AnimationPayload,
   AppState,
@@ -34,8 +37,8 @@ const exec = promisify(execFile);
 // Use the verified Metal backend while keeping hardware acceleration enabled.
 if (process.platform === "darwin")
   app.commandLine.appendSwitch("use-angle", "metal");
-if (process.env.TIMEGATE_TEST_DATA)
-  app.setPath("userData", process.env.TIMEGATE_TEST_DATA);
+app.setName("Openlude");
+app.setPath("userData", process.env.OPENLUDE_TEST_DATA || path.join(app.getPath("appData"), "Openlude"));
 let main: BrowserWindow | null = null;
 let overlay: BrowserWindow | null = null;
 let payload: AnimationPayload | null = null;
@@ -48,6 +51,7 @@ let resolveRun: ((value: LaunchResult) => void) | null = null;
 let watchdog: ReturnType<typeof setTimeout> | null = null;
 let overlayExit: Promise<void> | null = null;
 let state: SavedState;
+let updates: UpdateManager;
 let saveQueue = Promise.resolve();
 const renderPath = (name: string) =>
   path.join(__dirname, "../../dist-renderer", name);
@@ -60,6 +64,11 @@ const exists = async (file: string) =>
   );
 
 async function readState() {
+  if (!process.env.OPENLUDE_TEST_DATA) {
+    // Keep this old name only for upgrade compatibility.
+    await copyLegacySettings(configFile(), path.join(app.getPath("appData"), "TimeGate", "settings.json"))
+      .catch(() => console.warn("The previous configuration could not be imported; it was left intact."));
+  }
   let savedVersion: number;
   try {
     const saved = JSON.parse(await fs.readFile(configFile(), "utf8"));
@@ -288,8 +297,12 @@ async function runAnimation(
   busy = true;
   try {
     const hydrated = target ? await hydrate(target) : null;
-    const settings =
+    const savedSettings =
       previewPreferences ?? target?.preferences ?? state.preferences;
+    const settings = playbackPreferences(theme, {
+      ...savedSettings,
+      showAppIcon: savedSettings.showAppIcon && !!hydrated?.icon,
+    });
     payload = {
       operationId: randomUUID(),
       theme,
@@ -352,6 +365,36 @@ async function runAnimation(
 }
 
 function registerIPC() {
+  ipcMain.handle("settings:update", async (event, value: unknown) => {
+    mainOnly(event);
+    const next = generalSettings(value);
+    const previous = state.settings;
+    const changedLogin = next.autoStart !== previous.autoStart;
+    if (changedLogin) {
+      if (!app.isPackaged && !process.env.OPENLUDE_TEST_DATA)
+        throw new Error("请在安装版中设置开机启动");
+      app.setLoginItemSettings({ openAtLogin: next.autoStart, path: app.getPath("exe") });
+    }
+    state.settings = next;
+    try { await save(); }
+    catch (error) {
+      state.settings = previous;
+      if (changedLogin) app.setLoginItemSettings({ openAtLogin: previous.autoStart, path: app.getPath("exe") });
+      throw error;
+    }
+    nativeTheme.themeSource = next.appearance;
+    updates.autoCheck(next.autoCheckUpdates);
+    return next;
+  });
+  ipcMain.handle("updates:status", event => { mainOnly(event); return updates.status; });
+  ipcMain.handle("updates:check", event => { mainOnly(event); return updates.check(); });
+  ipcMain.handle("updates:download", event => { mainOnly(event); return updates.download(); });
+  ipcMain.handle("updates:install", event => {
+    mainOnly(event);
+    if (busy) throw new Error("请等待动画播放完成");
+    updates.install();
+  });
+  ipcMain.handle("project:open", event => { mainOnly(event); return shell.openExternal(PROJECT_URL); });
   ipcMain.handle("state", (event) => {
     mainOnly(event);
     return viewState();
@@ -483,8 +526,8 @@ async function createMain() {
     height: 850,
     minWidth: 1120,
     minHeight: 760,
-    title: "TimeGate",
-    backgroundColor: "#ffffff",
+    title: "Openlude",
+    backgroundColor: nativeTheme.shouldUseDarkColors ? "#191a1d" : "#ffffff",
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     trafficLightPosition: { x: 20, y: 19 },
     icon: renderPath("assets/branding/app-icon.png"),
@@ -518,9 +561,11 @@ else {
           ...(process.platform === "darwin"
             ? [
                 {
-                  label: "TimeGate",
+                  label: "Openlude",
                   submenu: [
                     { role: "about" as const },
+                    { label: "设置…", accelerator: "CmdOrCtrl+,", click: () => main?.webContents.send("settings:open") },
+                    { type: "separator" as const },
                     { role: "quit" as const },
                   ],
                 },
@@ -542,8 +587,11 @@ else {
         ]),
       );
       await readState();
+      nativeTheme.themeSource = state.settings.appearance;
+      updates = new UpdateManager(status => main?.webContents.send("updates:status", status));
       registerIPC();
       await createMain();
+      updates.autoCheck(state.settings.autoCheckUpdates);
     })
     .catch((error) => {
       console.error(error);

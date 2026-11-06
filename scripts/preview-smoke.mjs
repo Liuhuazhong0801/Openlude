@@ -30,7 +30,7 @@ page.on("console", (message) => {
 });
 try {
   await page.goto(
-    pathToFileURL(path.join(root, "dist-preview", "TimeGate-preview.html"))
+    pathToFileURL(path.join(root, "dist-preview", "Openlude-preview.html"))
       .href,
   );
   await page.waitForSelector("canvas.motion-canvas", { timeout: 10000 });
@@ -52,7 +52,7 @@ try {
   }
   assert.equal(sources.size, 4);
   assert.equal(
-    (await page.locator("#demo-stage").innerText()).includes("TimeGate"),
+    (await page.locator("#demo-stage").innerText()).includes("Openlude"),
     false,
   );
   report.checks.push(
@@ -66,9 +66,9 @@ try {
     width: box.width * 0.3,
     height: box.height - 120,
   };
-  for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
+  for (const theme of ["portal", "aurora", "paper", "pixel", "ink", "maple"]) {
     await page.locator(`#theme-picker [data-theme="${theme}"]`).click();
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1150);
     const early = await page.screenshot({ clip });
     await page.waitForTimeout(650);
     const later = await page.screenshot({ clip });
@@ -84,21 +84,32 @@ try {
     console.log("PASS", theme);
     await page.waitForTimeout(1500);
   }
+  await page.locator('#theme-picker [data-theme="portal"]').click();
   await page.locator("#demo-icon").uncheck();
   assert.equal(await page.locator(".app-emblem").isHidden(), true);
   await page.waitForTimeout(250);
   assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
   report.checks.push("Icon disabled: motion starts directly without an identity stage");
   await page.locator("#demo-icon").check();
-  await page.waitForTimeout(250);
-  assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "1");
+  const fadeIn = await page.evaluate(async () => {
+    const icon = document.querySelector(".app-emblem");
+    const start = performance.now(); const samples = [];
+    while (performance.now() - start < 450) {
+      samples.push(Number(getComputedStyle(icon).opacity));
+      await new Promise(requestAnimationFrame);
+    }
+    return samples;
+  });
+  assert.ok(fadeIn.some(value => value > 0.02 && value < 0.95));
+  assert.ok(fadeIn.some((value, i) => i && value > fadeIn[i - 1]));
+  assert.equal(Math.max(...fadeIn), 1);
   assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "0");
   assert.equal(await page.locator("#demo-stage").evaluate((el) => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)");
   assert.equal((await page.locator(".app-emblem").textContent()).trim(), "");
-  await page.waitForTimeout(650);
+  await page.waitForTimeout(700);
   assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "0");
   assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
-  report.checks.push("Icon enabled: identity appears alone, fades out, then motion appears");
+  report.checks.push("Icon enabled: measurable fade-in, icon alone on transparency, fade-out, then scene appears");
   assert.deepEqual(errors, []);
   await page.screenshot({ path: path.join(out, "preview-workspace.png") });
   await context.close();

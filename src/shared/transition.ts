@@ -1,5 +1,17 @@
 /** Keep the reveal inside the selected animation duration. */
-import type { Preferences } from "./types";
+import type { Preferences, ThemeId } from "./types";
+
+export const MAPLE_MOTION_DURATION = 4000;
+export const ICON_INTRO_DURATION = 900;
+
+/** The image-based theme has its own motion length; retain the user's other timing. */
+export function playbackPreferences(theme: ThemeId, settings: Preferences): Preferences {
+  if (theme !== "maple" || settings.reducedMotion) return settings;
+  return {
+    ...settings,
+    duration: MAPLE_MOTION_DURATION + (settings.showAppIcon ? ICON_INTRO_DURATION : 0),
+  };
+}
 
 export const REVEAL_DURATION = 650;
 export const QUICK_REVEAL_DURATION = 160;
@@ -25,7 +37,7 @@ export function animationDuration(settings: Preferences): number {
 /** One timeline for the workspace, standalone preview and native overlay. */
 export function animationFrame(elapsed: number, settings: Preferences) {
   const total = animationDuration(settings);
-  const intro = settings.showAppIcon ? Math.min(700, total * 0.32) : 0;
+  const intro = settings.showAppIcon ? Math.min(ICON_INTRO_DURATION, total * 0.38) : 0;
   const motionDuration = total - intro;
   const motionTime = Math.max(0, elapsed - intro);
   const iconProgress = intro ? elapsed / intro : 1;
@@ -33,9 +45,10 @@ export function animationFrame(elapsed: number, settings: Preferences) {
   return {
     // Keep advancing past the nominal end if a native app takes longer to activate.
     motionProgress: motionTime / motionDuration,
+    motionStart: intro,
     sceneOpacity: smooth(motionTime / Math.min(140, motionDuration * 0.15)),
     iconOpacity: settings.showAppIcon
-      ? smooth(iconProgress / 0.2) * (1 - smooth((iconProgress - 0.6) / 0.4))
+      ? smooth(iconProgress / 0.38) * (1 - smooth((iconProgress - 0.62) / 0.38))
       : 0,
     coverOpacity: 1 - smooth((elapsed - (total - reveal)) / reveal),
     revealAt: total - reveal,

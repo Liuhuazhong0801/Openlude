@@ -11,7 +11,7 @@ await build({
   build: {
     lib: {
       entry: "src/renderer/preview.ts",
-      name: "TimeGatePreview",
+      name: "OpenludePreview",
       formats: ["iife"],
       fileName: "preview",
     },
@@ -47,5 +47,9 @@ for (const filename of [
     `data:${mime};base64,${icon.toString("base64")}`,
   );
 }
-await fs.writeFile(path.join(out, "TimeGate-preview.html"), html);
-console.log("Standalone preview: " + path.join(out, "TimeGate-preview.html"));
+for (const [filename, mime] of [["maple.jpg", "image/jpeg"]]) {
+  const asset = await fs.readFile(`public/assets/themes/${filename}`);
+  html = html.replaceAll(`./assets/themes/${filename}`, `data:${mime};base64,${asset.toString("base64")}`);
+}
+await fs.writeFile(path.join(out, "Openlude-preview.html"), html);
+console.log("Standalone preview: " + path.join(out, "Openlude-preview.html"));

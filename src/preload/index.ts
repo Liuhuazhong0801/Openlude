@@ -7,6 +7,22 @@ const api: DesktopAPI = {
   bind: (id, theme, preferences) =>
     ipcRenderer.invoke("target:bind", id, theme, preferences),
   preferences: (value) => ipcRenderer.invoke("preferences", value),
+  settings: value => ipcRenderer.invoke("settings:update", value),
+  updateStatus: () => ipcRenderer.invoke("updates:status"),
+  checkUpdates: () => ipcRenderer.invoke("updates:check"),
+  downloadUpdate: () => ipcRenderer.invoke("updates:download"),
+  installUpdate: () => ipcRenderer.invoke("updates:install"),
+  openProject: () => ipcRenderer.invoke("project:open"),
+  onUpdate: callback => {
+    const listener = (_event: Electron.IpcRendererEvent, status: Parameters<typeof callback>[0]) => callback(status);
+    ipcRenderer.on("updates:status", listener);
+    return () => ipcRenderer.removeListener("updates:status", listener);
+  },
+  onOpenSettings: callback => {
+    const listener = () => callback();
+    ipcRenderer.on("settings:open", listener);
+    return () => ipcRenderer.removeListener("settings:open", listener);
+  },
   launch: (id) => ipcRenderer.invoke("launch", id),
   preview: (theme, id, preferences) =>
     ipcRenderer.invoke("preview", theme, id, preferences),
@@ -20,4 +36,4 @@ const api: DesktopAPI = {
     return () => ipcRenderer.removeListener("overlay:animate", listener);
   },
 };
-contextBridge.exposeInMainWorld("timegate", api);
+contextBridge.exposeInMainWorld("openlude", api);

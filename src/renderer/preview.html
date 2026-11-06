@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>启动动画预览</title>
+    <title>Openlude · 动画预览</title>
     <script type="module" src="./preview.ts"></script>
   </head>
   <body>
     <main>
       <header>
         <div>
-          <h1>启动动画预览</h1>
+          <h1>Openlude</h1>
           <p>选择应用和动画，查看启动前的效果。</p>
         </div>
         <label class="app-picker"
@@ -45,7 +45,7 @@
         ><label><input type="checkbox" id="demo-loop" checked />循环预览</label>
         <label><input type="checkbox" id="demo-icon" checked />显示应用图标</label>
         <div class="progress"><i id="demo-progress"></i></div>
-        <span>2.6 秒</span
+        <span id="demo-duration">2.6 秒</span
         ><button class="subtle" id="demo-fullscreen">全屏观看 ↗</button>
       </div>
       <footer>

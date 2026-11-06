@@ -1,5 +1,7 @@
 import * as THREE from "three";
-import type { ThemeId } from "../shared/types";
+import type { Preferences, ThemeId } from "../shared/types";
+import { playbackPreferences } from "../shared/transition";
+import { MapleScene } from "./maple";
 
 const ease = (x: number) => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
 const rand = (n: number) => {
@@ -68,7 +70,7 @@ function rounded(w: number, h: number, r: number): THREE.Shape {
   return s;
 }
 
-/** All motion is generated at runtime; theme artwork is used only by the gallery. */
+/** All themes share the same WebGL playback and native reveal lifecycle. */
 export class MotionScene {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
@@ -85,6 +87,7 @@ export class MotionScene {
   private papers: THREE.Mesh[] = [];
   private cubes?: THREE.InstancedMesh;
   private stars?: THREE.Points;
+  private maple?: MapleScene;
   constructor(private host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -115,6 +118,8 @@ export class MotionScene {
     this.render(this.progress);
   }
   private clearScene() {
+    this.maple?.dispose();
+    this.maple = undefined;
     this.scene.traverse((object) => {
       const item = object as THREE.Mesh;
       item.geometry?.dispose();
@@ -142,7 +147,9 @@ export class MotionScene {
     this.scene.fog = null;
     this.camera.position.set(0, 0, 10);
     this.camera.lookAt(0, 0, 0);
-    if (theme === "aurora" || theme === "ink") {
+    if (theme === "maple") {
+      this.maple = new MapleScene(this.scene, () => this.render(this.progress));
+    } else if (theme === "aurora" || theme === "ink") {
       this.uniforms.uInk.value = theme === "ink" ? 1 : 0;
       const mat = new THREE.ShaderMaterial({
         vertexShader,
@@ -255,6 +262,7 @@ export class MotionScene {
   }
   render(progress: number) {
     this.progress = progress;
+    this.maple?.render(progress, this.camera.aspect);
     this.uniforms.uProgress.value = progress;
     const p = progress;
     if (this.theme === "portal") {
@@ -324,6 +332,12 @@ export class MotionScene {
   }
   setOpacity(opacity: number) {
     this.renderer.domElement.style.opacity = String(opacity);
+  }
+  playbackSettings(settings: Preferences): Preferences {
+    return playbackPreferences(this.theme, settings);
+  }
+  async preparePlayback() {
+    await this.maple?.prepare();
   }
   dispose() {
     this.observer.disconnect();

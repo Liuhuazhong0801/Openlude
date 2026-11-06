@@ -44,6 +44,15 @@ export const THEMES = [
     light: true,
     accent: "#9b9d91",
   },
+  {
+    id: "maple",
+    name: "赤枫剑影",
+    en: "MAPLE",
+    description: "镜头穿入枫林，落叶掠过红衣剑客。",
+    motion: "4K 原图 · 镜头推进与落叶 · 4 秒",
+    light: false,
+    accent: "#c65332",
+  },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
 export interface Target {
@@ -64,10 +73,22 @@ export interface Preferences {
   reducedMotion: boolean;
   showAppIcon: boolean;
 }
+export interface GeneralSettings {
+  appearance: "system" | "light" | "dark";
+  autoStart: boolean;
+  autoCheckUpdates: boolean;
+}
+export interface UpdateStatus {
+  state: "idle" | "checking" | "current" | "empty" | "available" | "downloading" | "ready" | "error" | "development";
+  message: string;
+  version?: string;
+  progress?: number;
+}
 export interface SavedState {
   version: 2;
   targets: Target[];
   preferences: Preferences;
+  settings: GeneralSettings;
 }
 export interface AppState extends Omit<SavedState, "targets"> {
   targets: ViewTarget[];
@@ -99,6 +120,14 @@ export interface DesktopAPI {
     preferences?: Preferences,
   ): Promise<AppState>;
   preferences(value: Preferences): Promise<AppState>;
+  settings(value: GeneralSettings): Promise<GeneralSettings>;
+  updateStatus(): Promise<UpdateStatus>;
+  checkUpdates(): Promise<UpdateStatus>;
+  downloadUpdate(): Promise<void>;
+  installUpdate(): Promise<void>;
+  openProject(): Promise<void>;
+  onUpdate(callback: (status: UpdateStatus) => void): () => void;
+  onOpenSettings(callback: () => void): () => void;
   launch(id: string): Promise<LaunchResult>;
   preview(
     theme: ThemeId,

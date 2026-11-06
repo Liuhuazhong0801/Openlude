@@ -1,0 +1,14 @@
+{
+  "theme": "maple",
+  "name": "赤枫剑影",
+  "source": "User-provided original image 剑来.jpg",
+  "dimensions": {
+    "width": 3840,
+    "height": 2160
+  },
+  "file": "maple.jpg",
+  "sha256": "c281506972e83e5e60fa12c6d87523a80273239d480339773eaf95d121a737b2",
+  "rendering": "Real-time WebGL camera push, layered falling leaves and depth of field; original figure pose preserved",
+  "motionDurationMs": 4000,
+  "rights": "Original media rights retained; not included in the source code MIT license"
+}

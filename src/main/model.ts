@@ -5,6 +5,7 @@ import {
   type SavedState,
   type Target,
   type Preferences,
+  type GeneralSettings,
 } from "../shared/types";
 export function themeId(value: unknown): ThemeId {
   if (!THEMES.some((t) => t.id === value)) throw new Error("未知动画主题");
@@ -15,7 +16,16 @@ export function initialState(reducedMotion: boolean): SavedState {
     version: 2,
     targets: [],
     preferences: { duration: 1800, reducedMotion, showAppIcon: true },
+    settings: generalSettings(),
   };
+}
+export function generalSettings(value?: unknown): GeneralSettings {
+  if (value === undefined) return { appearance: "system", autoStart: false, autoCheckUpdates: true };
+  const s = value as GeneralSettings | null;
+  if (!s || !["system", "light", "dark"].includes(s.appearance) ||
+    typeof s.autoStart !== "boolean" || typeof s.autoCheckUpdates !== "boolean")
+    throw new Error("应用设置无效");
+  return { appearance: s.appearance, autoStart: s.autoStart, autoCheckUpdates: s.autoCheckUpdates };
 }
 export function preferences(value: unknown): Preferences {
   const p = value as Partial<Preferences> | null;
@@ -86,5 +96,6 @@ export function decodeState(input: unknown): SavedState {
       .filter((t) => s.version !== 1 || !t.builtin || !!t.path)
       .map(({ builtin: _builtin, ...target }) => target),
     preferences: preferences(s.preferences),
+    settings: generalSettings(s.settings),
   };
 }

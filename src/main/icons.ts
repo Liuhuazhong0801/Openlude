@@ -53,7 +53,7 @@ async function macBundleIcon(bundle: string): Promise<string | undefined> {
       continue;
     }
     const temporary = await fs.mkdtemp(
-      path.join(app.getPath("temp"), "timegate-icon-"),
+      path.join(app.getPath("temp"), "openlude-icon-"),
     );
     try {
       const output = path.join(temporary, "icon.png");

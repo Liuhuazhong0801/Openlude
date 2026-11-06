@@ -1,9 +1,9 @@
 {
-  "project": "TimeGate (working name)",
+  "project": "Openlude",
   "scope": "多主题桌面应用启动动画视觉素材",
   "generationMode": "built-in image_gen",
   "createdAt": "2026-11-06",
-  "assetStatus": "生成式位图素材与视觉关键帧；动画时间轴和独立动态图层尚未实现。",
+  "assetStatus": "前五个主题使用生成式缩略图与程序化动效；赤枫剑影使用用户原图和实时动态图层。",
   "branding": {
     "file": "branding/app-icon.png",
     "promptKey": "icon_universal",
@@ -94,6 +94,14 @@
         "#25292B",
         "#A9AAA5"
       ]
+    },
+    {
+      "id": "maple",
+      "name": "赤枫剑影",
+      "file": "themes/maple.jpg",
+      "sourceRecord": "themes/maple.source.json",
+      "durationMs": 4000,
+      "motionDirection": "镜头推进、远近落叶与景深；保留原画人物姿态。"
     }
   ],
   "usageNotes": [

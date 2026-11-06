@@ -1,6 +1,7 @@
 import "./preview.css";
 import { MotionScene } from "./motion";
 import { LaunchPlayback } from "./playback";
+import { animationDuration, playbackPreferences } from "../shared/transition";
 import { THEMES, type ThemeId } from "../shared/types";
 
 const stage = document.querySelector<HTMLElement>("#demo-stage")!;
@@ -29,12 +30,14 @@ picker.innerHTML = THEMES.map(
   (t) =>
     `<button data-theme="${t.id}" aria-pressed="${t.id === "portal"}"><span>${t.name}</span><small>${t.en}</small></button>`,
 ).join("");
+let currentTheme: ThemeId = "portal";
 let scene: MotionScene;
 let playback: LaunchPlayback;
 let timer: ReturnType<typeof setTimeout>;
 let generation = 0;
 function play() {
   clearTimeout(timer);
+  document.querySelector("#demo-duration")!.textContent = `${(animationDuration(playbackPreferences(currentTheme, { duration: 2600, reducedMotion: false, showAppIcon: showIcon.checked })) / 1000).toFixed(1)} 秒`;
   const token = ++generation;
   void playback
     .play({ duration: 2600, reducedMotion: false, showAppIcon: showIcon.checked }, {
@@ -42,9 +45,13 @@ function play() {
     })
     .then(() => {
       if (token === generation && loop.checked) timer = setTimeout(play, 700);
+    })
+    .catch((error) => {
+      document.querySelector("#motion-description")!.textContent = String(error.message || error);
     });
 }
 function select(theme: ThemeId) {
+  currentTheme = theme;
   const item = THEMES.find((t) => t.id === theme)!;
   scene.setTheme(theme);
   picker
