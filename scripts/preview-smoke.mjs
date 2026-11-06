@@ -30,11 +30,35 @@ page.on("console", (message) => {
 });
 try {
   await page.goto(
-    pathToFileURL(path.join(root, "dist-preview", "TimeGate-preview.html"))
+    pathToFileURL(path.join(root, "dist-preview", "Openlude-preview.html"))
       .href,
   );
   await page.waitForSelector("canvas.motion-canvas", { timeout: 10000 });
   await page.locator("#demo-loop").uncheck();
+  const sources = new Set();
+  for (const [id, name] of [
+    ["codex", "Codex"],
+    ["workbuddy", "WorkBuddy"],
+    ["deepseek", "DeepSeek"],
+    ["doubao", "豆包"],
+  ]) {
+    await page.locator("#demo-app").selectOption(id);
+    await page.waitForSelector("#demo-app-icon:not([hidden])");
+    assert.equal(await page.locator("#demo-app-icon").getAttribute("alt"), `${name} 图标`);
+    assert.equal(await page.locator("#demo-app-name").count(), 0);
+    const source = await page.locator("#demo-app-icon").getAttribute("src");
+    assert.ok(source.startsWith("data:image/"));
+    sources.add(source);
+  }
+  assert.equal(sources.size, 4);
+  assert.equal(
+    (await page.locator("#demo-stage").innerText()).includes("Openlude"),
+    false,
+  );
+  report.checks.push(
+    "Four demo icons switch correctly; no app name or launcher identity in the scene",
+  );
+  await page.locator("#demo-app").selectOption("codex");
   const box = await page.locator("#demo-stage").boundingBox();
   const clip = {
     x: box.x + 20,
@@ -42,24 +66,50 @@ try {
     width: box.width * 0.3,
     height: box.height - 120,
   };
-  for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
+  for (const theme of ["portal", "aurora", "paper", "pixel", "ink", "maple"]) {
     await page.locator(`#theme-picker [data-theme="${theme}"]`).click();
-    await page.waitForTimeout(550);
+    await page.waitForTimeout(1150);
     const early = await page.screenshot({ clip });
     await page.waitForTimeout(650);
     const later = await page.screenshot({ clip });
     assert.equal(
       early.equals(later),
       false,
-      `${theme} is static outside the center brand`,
+      `${theme} is static outside the target icon`,
     );
     await page
       .locator("#demo-stage")
       .screenshot({ path: path.join(out, `${theme}.png`) });
-    report.checks.push(`${theme}: scene pixels change outside the brand layer`);
+    report.checks.push(`${theme}: scene pixels change outside the target icon`);
     console.log("PASS", theme);
     await page.waitForTimeout(1500);
   }
+  await page.locator('#theme-picker [data-theme="portal"]').click();
+  await page.locator("#demo-icon").uncheck();
+  assert.equal(await page.locator(".app-emblem").isHidden(), true);
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
+  report.checks.push("Icon disabled: motion starts directly without an identity stage");
+  await page.locator("#demo-icon").check();
+  const fadeIn = await page.evaluate(async () => {
+    const icon = document.querySelector(".app-emblem");
+    const start = performance.now(); const samples = [];
+    while (performance.now() - start < 450) {
+      samples.push(Number(getComputedStyle(icon).opacity));
+      await new Promise(requestAnimationFrame);
+    }
+    return samples;
+  });
+  assert.ok(fadeIn.some(value => value > 0.02 && value < 0.95));
+  assert.ok(fadeIn.some((value, i) => i && value > fadeIn[i - 1]));
+  assert.equal(Math.max(...fadeIn), 1);
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "0");
+  assert.equal(await page.locator("#demo-stage").evaluate((el) => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)");
+  assert.equal((await page.locator(".app-emblem").textContent()).trim(), "");
+  await page.waitForTimeout(700);
+  assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "0");
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
+  report.checks.push("Icon enabled: measurable fade-in, icon alone on transparency, fade-out, then scene appears");
   assert.deepEqual(errors, []);
   await page.screenshot({ path: path.join(out, "preview-workspace.png") });
   await context.close();

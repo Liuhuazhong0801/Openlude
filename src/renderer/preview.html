@@ -3,36 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TimeGate · 动效预览</title>
+    <title>Openlude · 动画预览</title>
     <script type="module" src="./preview.ts"></script>
   </head>
   <body>
     <main>
       <header>
         <div>
-          <span class="eyebrow">TIMEGATE / MOTION STUDY 01</span>
-          <h1>让每一次开始，有所不同。</h1>
-          <p>五种实时绘制的启动动效 · 第一版技术样机</p>
+          <h1>Openlude</h1>
+          <p>选择应用和动画，查看启动前的效果。</p>
         </div>
-        <span class="status"><i></i>实时渲染</span>
+        <label class="app-picker"
+          >应用
+          <select id="demo-app">
+            <option value="codex" data-icon="./assets/apps/codex.png">
+              Codex
+            </option>
+            <option value="workbuddy" data-icon="./assets/apps/workbuddy.svg">
+              WorkBuddy
+            </option>
+            <option value="deepseek" data-icon="./assets/apps/deepseek.png">
+              DeepSeek
+            </option>
+            <option value="doubao" data-icon="./assets/apps/doubao.png">
+              豆包
+            </option>
+          </select>
+        </label>
       </header>
       <div id="theme-picker" aria-label="选择主题"></div>
       <section class="demo-stage" id="demo-stage" aria-label="启动动画预览">
-        <div class="scene-label">TIMEGATE <span>/ LAUNCH SEQUENCE</span></div>
-        <div class="brand-center">
-          <img src="./assets/branding/app-icon.png" alt="" /><strong
-            >TimeGate</strong
-          ><small>让开始，有所不同</small>
+        <div class="app-emblem">
+          <img id="demo-app-icon" alt="" hidden />
         </div>
         <div class="scene-caption">
-          <span id="current-name">光环穿梭</span><span>REAL-TIME MOTION</span>
+          <span id="current-name">光环穿梭</span>
         </div>
       </section>
       <div class="controls">
         <button id="demo-play">↻ 再播放一次</button
         ><label><input type="checkbox" id="demo-loop" checked />循环预览</label>
+        <label><input type="checkbox" id="demo-icon" checked />显示应用图标</label>
         <div class="progress"><i id="demo-progress"></i></div>
-        <span>2.6 秒</span
+        <span id="demo-duration">2.6 秒</span
         ><button class="subtle" id="demo-fullscreen">全屏观看 ↗</button>
       </div>
       <footer>

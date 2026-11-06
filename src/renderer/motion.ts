@@ -1,11 +1,9 @@
 import * as THREE from "three";
-import type { ThemeId } from "../shared/types";
+import type { Preferences, ThemeId } from "../shared/types";
+import { playbackPreferences } from "../shared/transition";
+import { MapleScene } from "./maple";
 
 const ease = (x: number) => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
-const smooth = (a: number, b: number, x: number) => {
-  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
 const rand = (n: number) => {
   const v = Math.sin(n * 91.731 + 7.12) * 43758.5453;
   return v - Math.floor(v);
@@ -72,13 +70,12 @@ function rounded(w: number, h: number, r: number): THREE.Shape {
   return s;
 }
 
-/** All motion is generated at runtime; theme artwork is used only by the gallery. */
+/** All themes share the same WebGL playback and native reveal lifecycle. */
 export class MotionScene {
   private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera = new THREE.PerspectiveCamera(46, 1, 0.1, 110);
   private observer: ResizeObserver;
-  private frame = 0;
   private theme: ThemeId = "portal";
   private progress = 0.4;
   private uniforms = {
@@ -90,7 +87,7 @@ export class MotionScene {
   private papers: THREE.Mesh[] = [];
   private cubes?: THREE.InstancedMesh;
   private stars?: THREE.Points;
-  private resolvePlay?: () => void;
+  private maple?: MapleScene;
   constructor(private host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -121,6 +118,8 @@ export class MotionScene {
     this.render(this.progress);
   }
   private clearScene() {
+    this.maple?.dispose();
+    this.maple = undefined;
     this.scene.traverse((object) => {
       const item = object as THREE.Mesh;
       item.geometry?.dispose();
@@ -135,7 +134,6 @@ export class MotionScene {
     this.stars = undefined;
   }
   setTheme(theme: ThemeId) {
-    this.stop();
     this.clearScene();
     this.theme = theme;
     this.host.dataset.theme = theme;
@@ -149,7 +147,9 @@ export class MotionScene {
     this.scene.fog = null;
     this.camera.position.set(0, 0, 10);
     this.camera.lookAt(0, 0, 0);
-    if (theme === "aurora" || theme === "ink") {
+    if (theme === "maple") {
+      this.maple = new MapleScene(this.scene, () => this.render(this.progress));
+    } else if (theme === "aurora" || theme === "ink") {
       this.uniforms.uInk.value = theme === "ink" ? 1 : 0;
       const mat = new THREE.ShaderMaterial({
         vertexShader,
@@ -262,6 +262,7 @@ export class MotionScene {
   }
   render(progress: number) {
     this.progress = progress;
+    this.maple?.render(progress, this.camera.aspect);
     this.uniforms.uProgress.value = progress;
     const p = progress;
     if (this.theme === "portal") {
@@ -329,57 +330,19 @@ export class MotionScene {
     }
     this.renderer.render(this.scene, this.camera);
   }
-  play(
-    duration: number,
-    reduced = false,
-    onProgress?: (p: number) => void,
-  ): Promise<void> {
-    this.stop();
-    const start = performance.now();
-    return new Promise((resolve) => {
-      this.resolvePlay = resolve;
-      const tick = (now: number) => {
-        const p = Math.min(
-          1,
-          (now - start) / (reduced ? Math.min(duration, 650) : duration),
-        );
-        this.render(reduced ? 0.7 : p);
-        onProgress?.(p);
-        if (p < 1) this.frame = requestAnimationFrame(tick);
-        else {
-          this.frame = 0;
-          this.resolvePlay = undefined;
-          resolve();
-        }
-      };
-      this.frame = requestAnimationFrame(tick);
-    });
+  setOpacity(opacity: number) {
+    this.renderer.domElement.style.opacity = String(opacity);
   }
-  stop() {
-    cancelAnimationFrame(this.frame);
-    this.frame = 0;
-    this.resolvePlay?.();
-    this.resolvePlay = undefined;
+  playbackSettings(settings: Preferences): Preferences {
+    return playbackPreferences(this.theme, settings);
+  }
+  async preparePlayback() {
+    await this.maple?.prepare();
   }
   dispose() {
-    this.stop();
     this.observer.disconnect();
     this.clearScene();
     this.renderer.dispose();
     this.renderer.domElement.remove();
   }
-}
-
-export function animateBrand(
-  element: HTMLElement,
-  p: number,
-  reduced: boolean,
-) {
-  element.style.opacity = String(
-    smooth(0.12, 0.42, p) * (1 - smooth(0.91, 1, p)),
-  );
-  element.style.transform = reduced
-    ? "translate(-50%, -50%)"
-    : `translate(-50%, -50%) translateY(${(1 - ease(p / 0.6)) * 22}px) scale(${0.86 + ease(p / 0.65) * 0.14})`;
-  element.style.filter = `blur(${reduced ? 0 : (1 - smooth(0.1, 0.42, p)) * 6}px)`;
 }

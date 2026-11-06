@@ -1,10 +1,10 @@
 {
-  "name": "timegate",
-  "productName": "TimeGate",
-  "version": "0.1.0",
+  "name": "openlude",
+  "productName": "Openlude",
+  "version": "0.3.0",
   "private": true,
   "description": "A desktop launcher with procedural launch animations",
-  "author": "TimeGate",
+  "author": "Openlude",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.renderer.json && tsc --noEmit -p tsconfig.main.json",
@@ -16,9 +16,11 @@
     "build:preview": "node scripts/build-preview.mjs",
     "test:preview": "node scripts/preview-smoke.mjs",
     "pack:mac": "npm run build && electron-builder --mac dir",
-    "pack:win": "npm run build && electron-builder --win nsis --x64"
+    "pack:win": "npm run build && electron-builder --win nsis --x64",
+    "pack:release": "npm run build && electron-builder --mac dmg zip --publish never"
   },
   "dependencies": {
+    "electron-updater": "6.8.11",
     "three": "0.187.0"
   },
   "devDependencies": {
@@ -31,8 +33,8 @@
     "vite": "8.3.6"
   },
   "build": {
-    "appId": "studio.timegate.desktop",
-    "productName": "TimeGate",
+    "appId": "studio.openlude.desktop",
+    "productName": "Openlude",
     "directories": {
       "output": "release"
     },
@@ -46,7 +48,8 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
-        "dir"
+        "dmg",
+        "zip"
       ],
       "icon": "public/assets/branding/app-icon.png",
       "identity": "-"
@@ -66,6 +69,13 @@
         "from": "native",
         "to": "native"
       }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Liuhuazhong0801",
+        "repo": "Openlude"
+      }
     ]
   },
   "engines": {
@@ -73,11 +83,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Liuhuazhong0801/TimeGate.git"
+    "url": "git+https://github.com/Liuhuazhong0801/Openlude.git"
   },
-  "homepage": "https://github.com/Liuhuazhong0801/TimeGate#readme",
+  "homepage": "https://github.com/Liuhuazhong0801/Openlude#readme",
   "bugs": {
-    "url": "https://github.com/Liuhuazhong0801/TimeGate/issues"
+    "url": "https://github.com/Liuhuazhong0801/Openlude/issues"
   },
   "license": "MIT"
 }

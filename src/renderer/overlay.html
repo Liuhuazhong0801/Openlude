@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="overlay-root">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,14 +7,12 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'"
     />
-    <title>TimeGate · 启动动画</title>
+    <title>启动动画</title>
   </head>
   <body class="overlay-body">
     <div id="overlay-stage" class="stage">
-      <div class="brand-center">
-        <img id="launch-icon" alt="" />
-        <div id="launch-name"></div>
-        <small id="launch-label"></small>
+      <div class="app-emblem">
+        <img id="launch-icon" alt="" hidden />
       </div>
       <button id="skip">跳过 <kbd>Esc</kbd></button>
     </div>

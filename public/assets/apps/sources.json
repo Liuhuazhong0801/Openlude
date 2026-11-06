@@ -1,0 +1,22 @@
+{
+  "retrievedAt": "2026-11-06",
+  "purpose": "Identify target applications in the launcher and motion previews",
+  "icons": {
+    "codex.png": {
+      "source": "Codex desktop application resource, Contents/Resources/icon-codex-light.png",
+      "bundleId": "com.openai.codex"
+    },
+    "workbuddy.svg": {
+      "source": "https://assets.workbuddy.cn/web/workbuddy/2d555459d623c206fdb8c6a492111abb97151910/assets/logo.svg",
+      "page": "https://www.workbuddy.cn/"
+    },
+    "deepseek.png": {
+      "source": "https://fe-static.deepseek.com/chat/icon-180.png",
+      "page": "https://chat.deepseek.com/"
+    },
+    "doubao.png": {
+      "source": "https://lf-flow-web-cdn.doubao.com/obj/flow-doubao/favicon/new-doubao/192x192.png",
+      "page": "https://www.doubao.com/chat/"
+    }
+  }
+}

@@ -1,21 +1,27 @@
 import "./style.css";
-import { THEMES, type AppState, type ThemeId } from "../shared/types";
-import { MotionScene, animateBrand } from "./motion";
+import {
+  THEMES,
+  type AppState,
+  type ThemeId,
+  type Preferences,
+  type ViewTarget,
+} from "../shared/types";
+import { MotionScene } from "./motion";
+import { LaunchPlayback } from "./playback";
+import { initializeSettings } from "./settings";
+import { animationDuration, playbackPreferences } from "../shared/transition";
 
 const paths: Record<string, string> = {
   play: "M9 5l11 7-11 7V5z",
   plus: "M12 5v14M5 12h14",
-  grid: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z",
+  search: "M21 21l-5-5M18 10a8 8 0 11-16 0 8 8 0 0116 0",
   expand: "M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5",
-  folder: "M3 7V5h7l2 2h9v13H3z",
   check: "M5 12l4 4L19 6",
-  settings: "M4 7h16M7 4v6M4 17h16M16 14v6",
-  info: "M12 11v6M12 7h.01M22 12a10 10 0 11-20 0 10 10 0 0120 0",
-  arrow: "M7 17L17 7M7 7h10v10",
+  settings: "M12 8a4 4 0 100 8 4 4 0 000-8M10 2h4l1 3 3 1 3-1 2 4-2 2v3l2 2-2 4-3-1-3 1-1 3h-4l-1-3-3-1-3 1-2-4 2-2v-3L1 9l2-4 3 1 3-1 1-3",
+  trash: "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6",
   close: "M6 6l12 12M6 18L18 6",
-  trash: "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14",
 };
-const icon = (name: string, size = 18) =>
+const icon = (name: string, size = 16) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
 const escape = (s: string) =>
   s.replace(
@@ -25,50 +31,91 @@ const escape = (s: string) =>
         c
       ]!,
   );
-const app = document.querySelector<HTMLDivElement>("#app")!;
-app.innerHTML = `
-<div class="shell">
-  <aside class="sidebar">
-    <div class="window-drag"></div>
-    <div class="identity"><img src="./assets/branding/app-icon.png" alt="TimeGate 图标"><div><strong>TimeGate</strong><span>让开始，有所不同</span></div></div>
-    <div class="nav-label">工作空间</div>
-    <button class="nav active" id="nav-studio">${icon("grid")}启动工作台<span class="nav-dot"></span></button>
-    <button class="nav" id="nav-apps">${icon("folder")}我的应用<span id="app-count" class="nav-count">4</span></button>
-    <div class="sidebar-note"><div class="note-glyph">✳</div><strong>一点仪式感，<br>一个新的开始。</strong><p>为熟悉的应用，<br>选一种喜欢的登场方式。</p></div>
-    <div class="sidebar-bottom"><button class="nav" id="nav-settings">${icon("settings")}偏好设置</button><button class="nav" id="nav-help">${icon("info")}使用说明</button><div class="version">TimeGate <span>0.1 · 技术样机</span></div></div>
+const $ = <T extends HTMLElement = HTMLElement>(selector: string) =>
+  document.querySelector<T>(selector)!;
+$("#app").innerHTML = `
+<header class="titlebar"><span>Openlude</span></header>
+<div class="workspace">
+  <aside class="sidebar" aria-label="应用列表">
+    <div class="sidebar-heading"><h2>应用</h2><span id="app-count"></span></div>
+    <label class="search-field">${icon("search")}<input id="app-search" type="search" placeholder="搜索应用" aria-label="搜索应用"></label>
+    <div id="application-list" class="application-list"></div>
+    <p class="empty-search" id="empty-search" hidden>没有匹配的应用</p>
+    <button class="button add-button" id="add-app">${icon("plus")}添加应用</button>
+    <div class="sidebar-bottom"><button class="text-button settings-entry" id="nav-settings" aria-current="false">${icon("settings")}设置</button></div>
   </aside>
-  <div class="main-shell">
-    <header class="topbar"><span>工作空间 <span class="slash">/</span> 启动工作台</span><span class="local-badge"><i></i> 本地运行</span></header>
-    <main class="content">
-      <div class="page-heading"><div class="eyebrow">A LITTLE MAGIC, EVERY LAUNCH</div><div class="heading-row"><h1>给每一次启动，一点惊喜。</h1><button class="button secondary" id="add-app">${icon("plus")}添加应用</button></div><p>选一个主题，按下播放。让日常从你喜欢的方式开始。</p></div>
-      <section aria-labelledby="themes-title"><div class="section-title"><h2 id="themes-title">选择一种登场方式</h2><span>5 款内置主题</span></div><div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card ${t.id === "portal" ? "selected" : ""}" data-theme="${t.id}" aria-pressed="${t.id === "portal"}"><div class="theme-art"><img src="./assets/themes/${t.id}.png" alt=""><span class="theme-tick">${icon("check", 13)}</span></div><div class="theme-caption"><strong>${t.name}</strong><span>${t.en}</span></div></button>`).join("")}</div></section>
-      <section class="preview-panel" aria-label="动态预览">
-        <div class="preview-left"><div class="stage" id="preview-stage"><div class="stage-label"><span class="live-dot"></span> 实时动效</div><div class="brand-center"><img id="preview-icon" src="./assets/branding/app-icon.png" alt=""><div id="preview-name">TimeGate</div><small>让开始，有所不同</small></div><div class="stage-corner" id="stage-caption">PORTAL / 01</div></div><div class="playback-bar"><button class="button play-button" id="play">${icon("play", 16)}播放动效</button><div class="playback-track"><i id="preview-progress"></i></div><span id="time-label">1.8 秒</span><button class="icon-button" id="fullscreen" aria-label="全屏预览" title="全屏预览">${icon("expand")}</button></div></div>
-        <div class="preview-settings" id="settings"><div class="preview-tag">当前主题</div><h2 id="theme-name">光环穿梭</h2><p id="theme-description"></p><div class="motion-detail" id="motion-detail"></div><div class="divider"></div><label class="field-label" for="preview-target">展示应用</label><select id="preview-target"><option value="">TimeGate · 自身预览</option></select><div class="range-label"><label class="field-label" for="duration">动画时长</label><span id="duration-label">1.8s</span></div><input id="duration" type="range" min="600" max="3000" step="100" value="1800"><label class="toggle-line"><span>柔和模式<small>降低运动幅度</small></span><input type="checkbox" id="reduced-motion"><span class="switch"></span></label><button class="button apply-button" id="apply" disabled>${icon("check", 16)}绑定到应用</button><span class="binding-hint" id="binding-hint">选择应用后，即可绑定主题</span></div>
-      </section>
-      <section id="applications" aria-labelledby="apps-title"><div class="section-title"><h2 id="apps-title">我的应用 <span class="inline-count" id="inline-count"></span></h2><span>主题可自由搭配</span></div><div class="application-grid" id="application-list"></div></section>
-      <footer><span>启动动画由本工具入口触发</span><span><kbd>Esc</kbd> 随时跳过全屏动画</span></footer>
-    </main>
-  </div>
+  <main class="content">
+    <section class="empty-workspace" id="empty-workspace" hidden><h1>添加你的第一个应用</h1><p>选择本机应用，为它设置启动动画。</p><button class="button primary" id="add-first-app">添加应用</button></section>
+    <header class="target-header" id="target-header">
+      <img id="target-icon" alt="" hidden>
+      <div class="target-title"><h1 id="target-name">选择应用</h1><p id="target-status">为应用设置启动动画</p></div>
+      <div class="target-actions"><button class="button" id="launch-target" disabled>启动应用</button></div>
+    </header>
+    <section class="themes" id="theme-section" aria-labelledby="themes-title">
+      <h2 id="themes-title">动画主题</h2>
+      <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art"><img src="./assets/themes/${t.id === "maple" ? "maple.jpg" : `${t.id}.png`}" alt=""><span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
+    </section>
+    <section class="preview-section" id="preview-section" aria-labelledby="preview-title">
+      <div class="section-heading"><h2 id="preview-title">预览</h2><span id="theme-name"></span></div>
+      <div class="stage" id="preview-stage"><div class="app-emblem"><img id="preview-icon" alt="" hidden></div></div>
+      <div class="playback-bar"><button class="button" id="play">${icon("play")}播放</button><div class="playback-track" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="preview-progress"></i></div><span id="time-label">1.8 秒</span><button class="button" id="fullscreen" aria-label="全屏预览">${icon("expand")}全屏</button></div>
+    </section>
+  </main>
+  <aside class="inspector" id="settings" aria-labelledby="settings-title">
+    <h2 id="settings-title">动画设置</h2>
+    <div class="setting-block" id="duration-setting"><div class="field-heading"><label for="duration">时长</label><div class="number-field"><input id="duration-value" aria-label="动画时长（秒）" type="number" min="0.6" max="3" step="0.1" value="1.8"><span>秒</span></div></div><input id="duration" type="range" min="600" max="3000" step="100" value="1800"><div class="range-limits"><span>0.6 秒</span><span>3.0 秒</span></div></div>
+    <div class="setting-block fixed-duration" id="fixed-duration" hidden><div class="field-heading"><span>动画时长</span><strong>4 秒</strong></div></div>
+    <label class="toggle-line"><span>显示应用图标</span><input type="checkbox" id="show-app-icon" checked><span class="switch" aria-hidden="true"></span></label>
+    <label class="toggle-line"><span>柔和模式</span><input type="checkbox" id="reduced-motion"><span class="switch" aria-hidden="true"></span></label>
+    <div class="inspector-bottom"><p id="save-status" aria-live="polite"></p><button class="button primary" id="apply" disabled>保存绑定</button></div>
+  </aside>
 </div>
 <div class="toast" role="status" aria-live="polite" id="toast"></div>
-<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><div class="eyebrow">GETTING STARTED</div><h2>为应用选择一种登场方式</h2><ol><li>添加本机应用，或定位已有预设。</li><li>选择主题，在“展示应用”中选中目标，点击“绑定到应用”。</li><li>点击应用卡片的启动按钮，播放动画并打开应用。</li></ol><p>“播放动效”和“全屏预览”只展示效果。DeepSeek、豆包在未定位客户端时可打开网页版。</p><p>原来的 Dock、任务栏图标仍按系统原有方式启动。全屏动画支持 Esc 跳过，柔和模式会降低运动幅度。</p><button class="button primary" id="help-done">开始体验</button></dialog>`;
+<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><h2>使用启动动画</h2><ol><li>点击“添加应用”，选择本机安装的应用。</li><li>选择主题，调整时长、图标开场和柔和模式，点击“保存绑定”。</li><li>点击“启动应用”，播放已保存的动画并打开应用。</li></ol><p>播放和全屏只预览当前设置。切换应用会保留本次未保存的修改，关闭工作台则放弃这些修改。</p><p>原来的 Dock、任务栏图标仍按系统原有方式启动。应用移动后，可将鼠标移到左侧应用上，点击删除图标移除，再重新添加。</p><button class="button" id="help-done">知道了</button></dialog>`;
 
+interface Draft extends Preferences {
+  theme: ThemeId;
+}
 let state: AppState;
-let selectedTheme: ThemeId = "portal";
+let settingsPage = false;
 let selectedTarget = "";
+const drafts = new Map<string, Draft>();
 let scene: MotionScene | null = null;
+let playback: LaunchPlayback;
 let localPlaying = false;
 let nativeBusy = false;
+let saving = false;
+let playbackGeneration = 0;
 let toastTimer: ReturnType<typeof setTimeout>;
-const stage = document.querySelector<HTMLElement>("#preview-stage")!;
-const brand = stage.querySelector<HTMLElement>(".brand-center")!;
-const playButton = document.querySelector<HTMLButtonElement>("#play")!;
-const applyButton = document.querySelector<HTMLButtonElement>("#apply")!;
-const targetSelect =
-  document.querySelector<HTMLSelectElement>("#preview-target")!;
+const stage = $("#preview-stage");
+const emblem = stage.querySelector<HTMLElement>(".app-emblem")!;
+const playButton = $<HTMLButtonElement>("#play");
+const applyButton = $<HTMLButtonElement>("#apply");
+function target() {
+  return state.targets.find((t) => t.id === selectedTarget);
+}
+function saved(t: ViewTarget): Draft {
+  return { ...state.preferences, ...t.preferences, theme: t.theme };
+}
+function draft(): Draft {
+  const t = target();
+  if (!t) return { ...state.preferences, theme: "portal" };
+  if (!drafts.has(t.id)) drafts.set(t.id, saved(t));
+  return drafts.get(t.id)!;
+}
+function changed(t: ViewTarget) {
+  const d = drafts.get(t.id);
+  const s = saved(t);
+  return (
+    !!d &&
+    (d.theme !== s.theme ||
+      d.duration !== s.duration ||
+      d.reducedMotion !== s.reducedMotion ||
+      d.showAppIcon !== s.showAppIcon)
+  );
+}
 function toast(message: string, error = false) {
-  const element = document.querySelector<HTMLElement>("#toast")!;
+  const element = $("#toast");
   element.textContent = message;
   element.classList.toggle("error", error);
   element.classList.add("show");
@@ -78,279 +125,335 @@ function toast(message: string, error = false) {
     error ? 5500 : 3200,
   );
 }
-function message(error: unknown) {
-  return String(error instanceof Error ? error.message : error).replace(
-    /^Error invoking remote method '[^']+': (Error: )?/,
-    "",
-  );
-}
 async function guard(action: () => Promise<void>) {
   try {
     await action();
   } catch (e) {
-    toast(message(e), true);
+    toast(
+      String(e instanceof Error ? e.message : e).replace(
+        /^Error invoking remote method '[^']+': (Error: )?/,
+        "",
+      ),
+      true,
+    );
   }
 }
-function resetBrand() {
-  brand.style.opacity = "1";
-  brand.style.transform = "translate(-50%, -50%)";
-  brand.style.filter = "none";
+function setImage(selector: string, source?: string, name = "") {
+  const image = $<HTMLImageElement>(selector);
+  if (source && image.getAttribute("src") === source) return;
+  image.hidden = true;
+  image.alt = name ? `${name} 图标` : "";
+  if (!source) {
+    image.removeAttribute("src");
+    return;
+  }
+  image.src = source;
+  void image
+    .decode()
+    .then(() => {
+      if (image.getAttribute("src") === source) image.hidden = false;
+    })
+    .catch(() => {});
 }
-function updateTheme() {
-  const theme = THEMES.find((t) => t.id === selectedTheme)!;
-  document
-    .querySelectorAll<HTMLButtonElement>(".theme-card")
-    .forEach((card) => {
-      const yes = card.dataset.theme === selectedTheme;
-      card.classList.toggle("selected", yes);
-      card.setAttribute("aria-pressed", String(yes));
-    });
-  document.querySelector("#theme-name")!.textContent = theme.name;
-  document.querySelector("#theme-description")!.textContent = theme.description;
-  document.querySelector("#motion-detail")!.textContent = theme.motion;
-  document.querySelector("#stage-caption")!.textContent =
-    `${theme.en} / 0${THEMES.indexOf(theme) + 1}`;
-  scene?.setTheme(selectedTheme);
-  resetBrand();
-  updateBrand();
+function resetEmblem() {
+  playback?.reset(draft().showAppIcon);
 }
-function updateBrand() {
-  const target = state.targets.find((t) => t.id === selectedTarget);
-  document.querySelector<HTMLImageElement>("#preview-icon")!.src =
-    target?.icon || "./assets/branding/app-icon.png";
-  document.querySelector("#preview-name")!.textContent =
-    target?.name || "TimeGate";
-  applyButton.disabled = !target || nativeBusy;
-  document.querySelector("#binding-hint")!.textContent = target
-    ? `已绑定：${THEMES.find((t) => t.id === target.theme)!.name}`
-    : "选择应用后，即可绑定主题";
+function stopPreview() {
+  ++playbackGeneration;
+  playback?.stop();
+  localPlaying = false;
+  resetEmblem();
+  $("#preview-progress").style.width = "0%";
+  $(".playback-track").setAttribute("aria-valuenow", "0");
+}
+function status(t: ViewTarget) {
+  return t.path
+    ? t.available
+      ? "本机应用"
+      : "路径失效"
+    : t.url
+      ? "网页入口"
+      : "未添加";
+}
+function updateControls() {
+  const t = target();
+  const settings = draft();
+  const fixed = settings.theme === "maple";
+  $("#duration-setting").hidden = fixed;
+  $("#fixed-duration").hidden = !fixed;
+  $("#time-label").textContent = `${(animationDuration(playbackPreferences(settings.theme, {
+    ...settings, showAppIcon: settings.showAppIcon && !!t?.icon,
+  })) / 1000).toFixed(1)} 秒`;
+  const busy = nativeBusy || saving;
+  applyButton.disabled = !t || busy || !changed(t);
+  playButton.disabled = !t || !scene || busy || localPlaying;
+  $<HTMLButtonElement>("#fullscreen").disabled = !t || busy;
+  $<HTMLButtonElement>("#launch-target").disabled = !t?.available || busy;
+  $<HTMLButtonElement>("#add-app").disabled = busy;
+  $<HTMLButtonElement>("#add-first-app").disabled = busy;
+  $("#save-status").textContent = !t
+    ? "请选择应用"
+    : saving
+      ? "正在保存…"
+      : changed(t)
+        ? "有未保存的修改"
+        : "已保存";
+  $("#launch-target").title =
+    t && changed(t) ? "启动将使用已保存的设置" : "播放动画并打开应用";
+  for (const element of document.querySelectorAll<HTMLInputElement>(
+    "#duration, #duration-value, #reduced-motion, #show-app-icon",
+  ))
+    element.disabled = !t || busy;
+  for (const element of document.querySelectorAll<HTMLButtonElement>(
+    ".theme-card, .app-identity, .remove-app",
+  ))
+    element.disabled = !t || busy;
 }
 function renderTargets() {
-  document.querySelector("#app-count")!.textContent = String(
-    state.targets.length,
+  $("#app-count").textContent = String(state.targets.length);
+  const query = $<HTMLInputElement>("#app-search")
+    .value.trim()
+    .toLocaleLowerCase();
+  const matches = state.targets.filter((t) =>
+    t.name.toLocaleLowerCase().includes(query),
   );
-  document.querySelector("#inline-count")!.textContent = String(
-    state.targets.length,
-  );
-  const previous = selectedTarget;
-  targetSelect.innerHTML =
-    '<option value="">TimeGate · 自身预览</option>' +
-    state.targets
-      .map((t) => `<option value="${escape(t.id)}">${escape(t.name)}</option>`)
-      .join("");
-  targetSelect.value = state.targets.some((t) => t.id === previous)
-    ? previous
-    : "";
-  selectedTarget = targetSelect.value;
-  document.querySelector("#application-list")!.innerHTML = state.targets
+  $("#application-list").innerHTML = matches
     .map((t) => {
       const theme = THEMES.find((th) => th.id === t.theme)!;
-      const badge = t.path
-        ? t.available
-          ? "本机应用"
-          : "路径失效"
-        : t.url
-          ? "网页入口"
-          : "待定位";
-      return `<article class="app-card" data-id="${escape(t.id)}"><button class="app-identity" data-action="select" aria-label="选择 ${escape(t.name)}">${t.icon ? `<img class="app-icon" src="${t.icon}" alt="">` : `<span class="app-monogram ${t.id}">${escape(t.name.slice(0, 1))}</span>`}<div><strong>${escape(t.name)}</strong><span><i style="background:${theme.accent}"></i>${theme.name}<b>·</b>${badge}</span></div></button><div class="app-actions"><button class="icon-button locate-button" data-action="locate" aria-label="定位 ${escape(t.name)}" title="定位本机应用">${icon("folder", 16)}</button>${!t.builtin ? `<button class="icon-button" data-action="remove" aria-label="移除 ${escape(t.name)}" title="移除应用">${icon("trash", 16)}</button>` : ""}<button class="launch-button" data-action="launch" ${!t.available || nativeBusy ? "disabled" : ""} aria-label="启动 ${escape(t.name)}">${icon("arrow", 17)}</button></div></article>`;
+      return `<article class="app-card ${t.id === selectedTarget ? "active" : ""}" data-id="${escape(t.id)}"><button class="app-identity" data-action="select" aria-label="选择 ${escape(t.name)}" aria-pressed="${t.id === selectedTarget}">${t.icon ? `<img class="app-icon" src="${escape(t.icon)}" alt="">` : `<span class="app-monogram">${escape(t.name.slice(0, 1))}</span>`}<span class="app-copy"><strong>${escape(t.name)}</strong><small>${t.available ? theme.name : status(t)}${t.url && !t.path ? " · 网页" : ""}</small></span>${changed(t) ? '<span class="unsaved" title="未保存" aria-label="有未保存的修改"></span>' : ""}</button><button class="icon-button remove-app" data-action="remove" aria-label="移除 ${escape(t.name)}" title="移除应用">${icon("trash", 15)}</button></article>`;
     })
     .join("");
-  updateBrand();
+  $("#empty-search").hidden = matches.length > 0;
+  $("#empty-search").textContent = state.targets.length ? "没有匹配的应用" : "暂无应用";
+  updateControls();
 }
-async function savePreferences() {
-  const duration = Number(
-    document.querySelector<HTMLInputElement>("#duration")!.value,
-  );
-  const reducedMotion =
-    document.querySelector<HTMLInputElement>("#reduced-motion")!.checked;
-  state = await window.timegate.preferences({ duration, reducedMotion });
+function updateSelection() {
+  const t = target();
+  const d = draft();
+  const theme = THEMES.find((item) => item.id === d.theme)!;
+  $(".workspace").classList.toggle("empty", !t);
+  $("#empty-workspace").hidden = !!t;
+  for (const selector of ["#target-header", "#theme-section", "#preview-section", "#settings"])
+    $(selector).hidden = !t;
+  for (const [image, label] of [
+    ["#target-icon", "#target-name"],
+  ]) {
+    setImage(image, t?.icon, t?.name);
+    $(label).textContent = t?.name ?? "选择应用";
+  }
+  setImage("#preview-icon", t?.icon, t?.name);
+  $("#target-status").textContent = t
+    ? (t.available ? "" : status(t))
+    : "";
+  $("#theme-name").textContent = theme.name;
+  for (const card of document.querySelectorAll<HTMLButtonElement>(
+    ".theme-card",
+  )) {
+    const selected = card.dataset.theme === d.theme;
+    card.classList.toggle("selected", selected);
+    card.setAttribute("aria-pressed", String(selected));
+  }
+  $<HTMLInputElement>("#duration").value = String(d.duration);
+  $<HTMLInputElement>("#duration-value").value = (d.duration / 1000).toFixed(1);
+  $<HTMLInputElement>("#reduced-motion").checked = d.reducedMotion;
+  $<HTMLInputElement>("#show-app-icon").checked = d.showAppIcon;
+  $("#time-label").textContent = `${(d.duration / 1000).toFixed(1)} 秒`;
+  stopPreview();
+  scene?.setTheme(d.theme);
+  renderTargets();
+}
+function selectTarget(id: string) {
+  showWorkspace();
+  selectedTarget = id;
+  updateSelection();
+}
+function showWorkspace() {
+  settingsPage = false;
+  $(".content").hidden = false;
+  $("#general-settings").hidden = true;
+  $(".workspace").classList.remove("show-settings");
+  $("#nav-settings").setAttribute("aria-current", "false");
+  $("#settings").hidden = !target();
+}
+function showSettings() {
+  if (nativeBusy) return;
+  stopPreview();
+  updateControls();
+  settingsPage = true;
+  $(".content").hidden = true;
+  $("#settings").hidden = true;
+  $("#general-settings").hidden = false;
+  $(".workspace").classList.add("show-settings");
+  $("#nav-settings").setAttribute("aria-current", "page");
+  $("#general-settings-title").focus();
 }
 async function nativeAction(
-  action: () => ReturnType<typeof window.timegate.launch>,
+  action: () => ReturnType<typeof window.openlude.launch>,
 ) {
   if (nativeBusy) return;
-  scene?.stop();
-  resetBrand();
+  stopPreview();
   nativeBusy = true;
-  renderTargets();
-  document.querySelector<HTMLButtonElement>("#fullscreen")!.disabled = true;
+  updateControls();
   try {
     const result = await action();
     if (!result.ok) toast(result.error || "启动失败", true);
   } finally {
     nativeBusy = false;
-    renderTargets();
-    document.querySelector<HTMLButtonElement>("#fullscreen")!.disabled = false;
+    updateControls();
   }
 }
-
-document.querySelector(".theme-grid")!.addEventListener("click", (event) => {
+async function addApplication() {
+  const next = await window.openlude.add();
+  if (!next) return;
+  state = next;
+  selectTarget(next.targets.at(-1)!.id);
+  toast("应用已添加");
+}
+$(".theme-grid").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
     "[data-theme]",
   );
-  if (button) {
-    selectedTheme = button.dataset.theme as ThemeId;
-    updateTheme();
-  }
+  if (!button || nativeBusy || saving) return;
+  draft().theme = button.dataset.theme as ThemeId;
+  updateSelection();
 });
-targetSelect.addEventListener("change", () => {
-  selectedTarget = targetSelect.value;
-  updateBrand();
+$("#app-search").addEventListener("input", renderTargets);
+$("#application-list").addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
+    "[data-action]",
+  );
+  const id = button?.closest<HTMLElement>("[data-id]")?.dataset.id;
+  if (!button || !id || nativeBusy || saving) return;
+  if (button.dataset.action === "select") selectTarget(id);
+  if (button.dataset.action === "remove") void guard(async () => {
+    state = await window.openlude.remove(id);
+    drafts.delete(id);
+    selectTarget(id === selectedTarget ? state.targets[0]?.id ?? "" : selectedTarget);
+  });
+});
+$("#add-app").addEventListener("click", () => {
+  void guard(() => addApplication());
+});
+$("#add-first-app").addEventListener("click", () => {
+  void guard(() => addApplication());
+});
+$("#launch-target").addEventListener("click", () => {
+  void guard(() => nativeAction(() => window.openlude.launch(selectedTarget)));
 });
 applyButton.addEventListener("click", () => {
   void guard(async () => {
-    if (!selectedTarget) return;
-    state = await window.timegate.bind(selectedTarget, selectedTheme);
-    renderTargets();
-    toast("已保存，下次启动将使用这个主题");
-  });
-});
-document.querySelector("#add-app")!.addEventListener("click", () => {
-  void guard(async () => {
-    const next = await window.timegate.add();
-    if (next) {
-      state = next;
-      selectedTarget = next.targets.at(-1)!.id;
-      renderTargets();
-      toast("应用已添加");
+    if (!target() || saving) return;
+    const id = selectedTarget;
+    const d = { ...draft() };
+    saving = true;
+    updateControls();
+    try {
+      state = await window.openlude.bind(id, d.theme, {
+        duration: d.duration,
+        reducedMotion: d.reducedMotion,
+        showAppIcon: d.showAppIcon,
+      });
+      drafts.delete(id);
+      updateSelection();
+      toast("已保存");
+    } finally {
+      saving = false;
+      updateControls();
     }
   });
 });
-document
-  .querySelector("#application-list")!
-  .addEventListener("click", (event) => {
-    void guard(async () => {
-      const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
-        "[data-action]",
-      );
-      const card = button?.closest<HTMLElement>("[data-id]");
-      if (!button || !card) return;
-      const id = card.dataset.id!;
-      if (button.dataset.action === "select") {
-        selectedTarget = id;
-        targetSelect.value = id;
-        selectedTheme = state.targets.find((t) => t.id === id)!.theme;
-        updateTheme();
-        stage.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      if (button.dataset.action === "locate") {
-        const next = await window.timegate.add(id);
-        if (next) {
-          state = next;
-          renderTargets();
-          toast("已更新应用位置");
-        }
-      }
-      if (button.dataset.action === "remove") {
-        state = await window.timegate.remove(id);
-        renderTargets();
-        toast("已从列表移除");
-      }
-      if (button.dataset.action === "launch")
-        await nativeAction(() => window.timegate.launch(id));
-    });
-  });
 playButton.addEventListener("click", () => {
   void guard(async () => {
     if (!scene || localPlaying) return;
+    const d = { ...draft() };
+    const generation = ++playbackGeneration;
     localPlaying = true;
-    playButton.disabled = true;
-    await scene.play(
-      state.preferences.duration,
-      state.preferences.reducedMotion,
-      (p) => {
-        animateBrand(brand, p, state.preferences.reducedMotion);
-        document.querySelector<HTMLElement>("#preview-progress")!.style.width =
-          `${p * 100}%`;
+    updateControls();
+    try {
+      await playback.play(d, {
+      onProgress: (p) => {
+        $("#preview-progress").style.width = `${p * 100}%`;
+        $(".playback-track").setAttribute(
+          "aria-valuenow",
+          String(Math.round(p * 100)),
+        );
       },
-    );
-    localPlaying = false;
-    playButton.disabled = false;
-    resetBrand();
+      });
+    } finally {
+      if (generation === playbackGeneration) {
+        localPlaying = false;
+        resetEmblem();
+        updateControls();
+      }
+    }
   });
 });
-document.querySelector("#fullscreen")!.addEventListener("click", () => {
+$("#fullscreen").addEventListener("click", () => {
+  const d = { ...draft() };
   void guard(() =>
     nativeAction(() =>
-      window.timegate.preview(selectedTheme, selectedTarget || undefined),
+      window.openlude.preview(d.theme, selectedTarget, {
+        duration: d.duration,
+        reducedMotion: d.reducedMotion,
+        showAppIcon: d.showAppIcon,
+      }),
     ),
   );
 });
-document
-  .querySelector<HTMLInputElement>("#duration")!
-  .addEventListener("input", (event) => {
-    const value = Number((event.target as HTMLInputElement).value);
-    document.querySelector("#duration-label")!.textContent =
-      `${(value / 1000).toFixed(1)}s`;
-    document.querySelector("#time-label")!.textContent =
-      `${(value / 1000).toFixed(1)} 秒`;
-  });
-document.querySelector("#duration")!.addEventListener("change", () => {
-  void guard(savePreferences);
+function setDuration(value: number) {
+  if (!Number.isFinite(value)) return;
+  draft().duration =
+    Math.round(Math.min(3000, Math.max(600, value)) / 100) * 100;
+  const duration = draft().duration;
+  $<HTMLInputElement>("#duration").value = String(duration);
+  $<HTMLInputElement>("#duration-value").value = (duration / 1000).toFixed(1);
+  $("#time-label").textContent = `${(duration / 1000).toFixed(1)} 秒`;
+  renderTargets();
+}
+$("#duration").addEventListener("input", (event) =>
+  setDuration(Number((event.target as HTMLInputElement).value)),
+);
+$("#duration-value").addEventListener("change", (event) =>
+  setDuration(Number((event.target as HTMLInputElement).value) * 1000),
+);
+$("#reduced-motion").addEventListener("change", (event) => {
+  draft().reducedMotion = (event.target as HTMLInputElement).checked;
+  stopPreview();
+  renderTargets();
 });
-document.querySelector("#reduced-motion")!.addEventListener("change", () => {
-  void guard(savePreferences);
+$("#show-app-icon").addEventListener("change", (event) => {
+  draft().showAppIcon = (event.target as HTMLInputElement).checked;
+  stopPreview();
+  renderTargets();
 });
-document
-  .querySelector("#nav-studio")!
-  .addEventListener("click", () =>
-    document
-      .querySelector(".content")!
-      .scrollTo({ top: 0, behavior: "smooth" }),
-  );
-document
-  .querySelector("#nav-apps")!
-  .addEventListener("click", () =>
-    document
-      .querySelector("#applications")!
-      .scrollIntoView({ behavior: "smooth" }),
-  );
-document.querySelector("#nav-settings")!.addEventListener("click", () => {
-  document
-    .querySelector("#settings")!
-    .scrollIntoView({ behavior: "smooth", block: "center" });
-  document
-    .querySelector<HTMLInputElement>("#duration")!
-    .focus({ preventScroll: true });
-});
-const help = document.querySelector<HTMLDialogElement>("#help")!;
-document
-  .querySelector("#nav-help")!
-  .addEventListener("click", () => help.showModal());
-document
-  .querySelector("#close-help")!
-  .addEventListener("click", () => help.close());
-document
-  .querySelector("#help-done")!
-  .addEventListener("click", () => help.close());
+const help = $<HTMLDialogElement>("#help");
+$("#close-help").addEventListener("click", () => help.close());
+$("#help-done").addEventListener("click", () => help.close());
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
-    scene?.stop();
-    resetBrand();
+    if (settingsPage && !help.open) showWorkspace();
+    stopPreview();
+    if (state) updateControls();
   }
 });
-window.addEventListener("beforeunload", () => scene?.dispose());
+window.addEventListener("beforeunload", () => {
+  playback?.stop();
+  scene?.dispose();
+});
 
 try {
-  state = await window.timegate.state();
-  document.querySelector<HTMLInputElement>("#duration")!.value = String(
-    state.preferences.duration,
-  );
-  document.querySelector<HTMLInputElement>("#reduced-motion")!.checked =
-    state.preferences.reducedMotion;
-  document.querySelector("#duration-label")!.textContent =
-    `${(state.preferences.duration / 1000).toFixed(1)}s`;
-  document.querySelector("#time-label")!.textContent =
-    `${(state.preferences.duration / 1000).toFixed(1)} 秒`;
+  state = await window.openlude.state();
+  document.documentElement.dataset.platform = state.platform;
+  initializeSettings(state.settings, state.versionName, showSettings);
+  $("#back-to-workspace").addEventListener("click", showWorkspace);
   try {
     scene = new MotionScene(stage);
   } catch {
     stage.classList.add("fallback-stage");
-    playButton.disabled = true;
     toast("此设备暂无法绘制动态预览；启动时将使用简短淡入。", true);
   }
-  renderTargets();
-  updateTheme();
+  playback = new LaunchPlayback(scene, emblem);
+  selectTarget(state.targets[0]?.id ?? "");
 } catch (error) {
-  toast(`初始化失败：${message(error)}`, true);
+  toast(`初始化失败：${String(error)}`, true);
 }

@@ -5,6 +5,7 @@ import {
   ipcMain,
   Menu,
   systemPreferences,
+  nativeTheme,
   screen,
   shell,
   type IpcMainInvokeEvent,
@@ -13,9 +14,14 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 import { randomUUID } from "node:crypto";
-import { allowedApplication, decodeState, preferences, themeId } from "./model";
+import { setTimeout as delay } from "node:timers/promises";
+import { allowedApplication, decodeState, generalSettings, initialState, preferences, themeId } from "./model";
+import { copyLegacySettings } from "./migration";
+import { PROJECT_URL, UpdateManager } from "./updates";
+import { applicationIcon } from "./icons";
+import { fadeWindowOut } from "./transition";
+import { playbackPreferences, QUICK_REVEAL_DURATION, revealDuration } from "../shared/transition";
 import type {
   AnimationPayload,
   AppState,
@@ -24,14 +30,15 @@ import type {
   Target,
   ThemeId,
   ViewTarget,
+  Preferences,
 } from "../shared/types";
 
 const exec = promisify(execFile);
 // Use the verified Metal backend while keeping hardware acceleration enabled.
 if (process.platform === "darwin")
   app.commandLine.appendSwitch("use-angle", "metal");
-if (process.env.TIMEGATE_TEST_DATA)
-  app.setPath("userData", process.env.TIMEGATE_TEST_DATA);
+app.setName("Openlude");
+app.setPath("userData", process.env.OPENLUDE_TEST_DATA || path.join(app.getPath("appData"), "Openlude"));
 let main: BrowserWindow | null = null;
 let overlay: BrowserWindow | null = null;
 let payload: AnimationPayload | null = null;
@@ -42,9 +49,10 @@ let launchTask: Promise<LaunchResult> | null = null;
 let activeTarget: Target | null = null;
 let resolveRun: ((value: LaunchResult) => void) | null = null;
 let watchdog: ReturnType<typeof setTimeout> | null = null;
+let overlayExit: Promise<void> | null = null;
 let state: SavedState;
+let updates: UpdateManager;
 let saveQueue = Promise.resolve();
-const iconCache = new Map<string, string>();
 const renderPath = (name: string) =>
   path.join(__dirname, "../../dist-renderer", name);
 const preload = path.join(__dirname, "../preload/index.js");
@@ -55,97 +63,33 @@ const exists = async (file: string) =>
     () => false,
   );
 
-async function initialState(): Promise<SavedState> {
-  const presets: Target[] = [
-    { id: "codex", name: "Codex", path: null, theme: "portal", builtin: true },
-    {
-      id: "workbuddy",
-      name: "WorkBuddy",
-      path: null,
-      theme: "paper",
-      builtin: true,
-    },
-    {
-      id: "deepseek",
-      name: "DeepSeek",
-      path: null,
-      url: "https://chat.deepseek.com/",
-      theme: "aurora",
-      builtin: true,
-    },
-    {
-      id: "doubao",
-      name: "豆包",
-      path: null,
-      url: "https://www.doubao.com/chat/",
-      theme: "pixel",
-      builtin: true,
-    },
-  ];
-  if (process.platform === "darwin") {
-    const roots = ["/Applications", path.join(os.homedir(), "Applications")];
-    const names = [
-      "Codex.app",
-      "ChatGPT.app",
-      "WorkBuddy.app",
-      "workbuddy.app",
-      "DeepSeek.app",
-      "DeepSeek Harness.app",
-      "豆包.app",
-      "Doubao.app",
-    ];
-    for (const target of presets) {
-      for (const root of roots)
-        for (const name of names) {
-          const key = name.toLowerCase();
-          const match =
-            target.id === "codex"
-              ? /codex|chatgpt/.test(key)
-              : target.id === "doubao"
-                ? /doubao|豆包/.test(key)
-                : key.includes(target.id);
-          if (match && !target.path && (await exists(path.join(root, name)))) {
-            const candidate = path.join(root, name);
-            // Some Codex builds retain the ChatGPT bundle filename.
-            // The ordinary ChatGPT app must not be mistaken for Codex.
-            if (name === "ChatGPT.app") {
-              const identity = await exec(
-                "/usr/libexec/PlistBuddy",
-                [
-                  "-c",
-                  "Print :CFBundleIdentifier",
-                  path.join(candidate, "Contents/Info.plist"),
-                ],
-                { timeout: 2000 },
-              ).catch(() => null);
-              if (identity?.stdout.trim() !== "com.openai.codex") continue;
-            }
-            target.path = candidate;
-          }
-        }
-    }
-  }
-  return {
-    version: 1,
-    targets: presets,
-    preferences: {
-      duration: 1800,
-      reducedMotion:
-        systemPreferences.getAnimationSettings().prefersReducedMotion,
-    },
-  };
-}
-
 async function readState() {
+  if (!process.env.OPENLUDE_TEST_DATA) {
+    // Keep this old name only for upgrade compatibility.
+    await copyLegacySettings(configFile(), path.join(app.getPath("appData"), "TimeGate", "settings.json"))
+      .catch(() => console.warn("The previous configuration could not be imported; it was left intact."));
+  }
+  let savedVersion: number;
   try {
-    state = decodeState(JSON.parse(await fs.readFile(configFile(), "utf8")));
+    const saved = JSON.parse(await fs.readFile(configFile(), "utf8"));
+    state = decodeState(saved);
+    savedVersion = saved.version;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       const backup = `${configFile()}.invalid-${Date.now()}`;
       await fs.rename(configFile(), backup).catch(() => {});
       console.warn("Invalid configuration was preserved as a backup.");
     }
-    state = await initialState();
+    state = initialState(systemPreferences.getAnimationSettings().prefersReducedMotion);
+    return;
+  }
+  if (savedVersion !== state.version) {
+    try {
+      await fs.copyFile(configFile(), `${configFile()}.v1-backup-${Date.now()}`);
+      await save();
+    } catch {
+      console.warn("Configuration migration is active but could not be saved.");
+    }
   }
 }
 function save(): Promise<void> {
@@ -162,16 +106,7 @@ function save(): Promise<void> {
 }
 async function hydrate(target: Target): Promise<ViewTarget> {
   const available = target.path ? await exists(target.path) : !!target.url;
-  let icon = target.path ? iconCache.get(target.path) : undefined;
-  if (!icon && target.path && available) {
-    icon = await app
-      .getFileIcon(target.path, {
-        size: process.platform === "darwin" ? "normal" : "large",
-      })
-      .then((x) => x.toDataURL())
-      .catch(() => undefined);
-    if (icon) iconCache.set(target.path, icon);
-  }
+  const icon = target.path && available ? await applicationIcon(target.path) : undefined;
   return { ...target, available, icon };
 }
 async function viewState(): Promise<AppState> {
@@ -226,7 +161,7 @@ async function startTarget(target: Target): Promise<LaunchResult> {
         !allowedApplication(target.path, process.platform) ||
         !(await exists(target.path))
       )
-        return { ok: false, error: "应用路径已失效，请重新定位。" };
+        return { ok: false, error: "应用路径已失效，请移除后重新添加。" };
       if (process.platform === "darwin")
         await exec("/usr/bin/open", ["-g", target.path], { timeout: 8000 });
       else {
@@ -235,7 +170,7 @@ async function startTarget(target: Target): Promise<LaunchResult> {
       }
     } else if (target.url?.startsWith("https://"))
       await deadline(shell.openExternal(target.url), 8000);
-    else return { ok: false, error: "请先定位本机应用。" };
+    else return { ok: false, error: "请先添加本机应用。" };
     return { ok: true };
   } catch {
     return { ok: false, error: "系统未能打开应用，请检查安装位置后重试。" };
@@ -267,6 +202,32 @@ async function activateTarget(target: Target): Promise<boolean> {
   return result.stdout.trim() === "True";
 }
 
+function dismissOverlay(
+  window: BrowserWindow | null,
+  duration: number,
+): Promise<void> {
+  if (!window || window.isDestroyed()) return Promise.resolve();
+  if (overlayExit) return overlayExit;
+  overlayExit = (async () => {
+    try {
+      await fadeWindowOut(window, duration);
+    } catch {
+      // A platform compositor failure should fall back to closing the overlay.
+      console.warn("Native fade was unavailable; closing the animation window.");
+    } finally {
+      if (overlay === window) overlay = null;
+      if (!window.isDestroyed()) window.destroy();
+    }
+  })();
+  return overlayExit;
+}
+
+function skipRun() {
+  // Skipping must release the screen even when the OS launch request is slow.
+  void dismissOverlay(overlay, QUICK_REVEAL_DURATION);
+  void finishRun();
+}
+
 async function finishRun(failure?: string) {
   if (!payload || finishing) return;
   finishing = true;
@@ -275,53 +236,80 @@ async function finishRun(failure?: string) {
   const current = payload;
   const target = activeTarget;
   const window = overlay;
-  overlay = null;
-  if (window && !window.isDestroyed()) window.destroy();
+  // A slow or unresponsive external application must never trap the user here.
+  const handoffDeadline = setTimeout(() => {
+    void dismissOverlay(window, QUICK_REVEAL_DURATION);
+  }, 1800);
   let result: LaunchResult = failure
     ? { ok: false, error: failure }
     : { ok: true };
-  if (!current.preview && target) {
-    const launch = launchTask
-      ? await launchTask
-      : { ok: false, error: "动画窗口未就绪，应用尚未启动。" };
-    if (!launch.ok) result = launch;
-    else {
-      const focusConfirmed = await activateTarget(target).catch(() => false);
-      if (result.ok) result.focusConfirmed = focusConfirmed;
+  try {
+    if (failure) await dismissOverlay(window, 0);
+    if (!current.preview && target) {
+      const launch = launchTask
+        ? await launchTask
+        : { ok: false, error: "动画窗口未就绪，应用尚未启动。" };
+      if (!launch.ok) result = launch;
+      else if (!failure) {
+        // Bring the real application forward while the animation still covers it.
+        result.focusConfirmed = await activateTarget(target).catch(() => false);
+        if (window && !window.isDestroyed()) await delay(120);
+      }
     }
-  }
-  if (current.preview || !result.ok) {
+    if (current.preview || !result.ok) {
+      main?.show();
+      main?.focus();
+    }
+    await dismissOverlay(
+      window,
+      revealDuration(current.reducedMotion, current.duration),
+    );
+  } catch {
+    result = { ok: false, error: "动画交接失败，请直接打开目标应用。" };
+    if (window && !window.isDestroyed()) window.destroy();
+    if (overlay === window) overlay = null;
     main?.show();
     main?.focus();
+  } finally {
+    clearTimeout(handoffDeadline);
+    const resolve = resolveRun;
+    payload = null;
+    activeTarget = null;
+    launchTask = null;
+    resolveRun = null;
+    overlayExit = null;
+    launchStarted = false;
+    busy = false;
+    finishing = false;
+    resolve?.(result);
   }
-  const resolve = resolveRun;
-  payload = null;
-  activeTarget = null;
-  launchTask = null;
-  resolveRun = null;
-  launchStarted = false;
-  busy = false;
-  finishing = false;
-  resolve?.(result);
 }
 async function runAnimation(
   theme: ThemeId,
   target: Target | null,
   preview: boolean,
+  previewPreferences?: Preferences,
 ): Promise<LaunchResult> {
   if (busy) return { ok: false, error: "上一次启动仍在进行。" };
   if (!preview && target && !(await hydrate(target)).available)
-    return { ok: false, error: "应用未安装或路径已失效，请重新定位。" };
+    return { ok: false, error: "应用未安装或路径已失效，请移除后重新添加。" };
   if (busy) return { ok: false, error: "上一次启动仍在进行。" };
   busy = true;
   try {
     const hydrated = target ? await hydrate(target) : null;
+    const savedSettings =
+      previewPreferences ?? target?.preferences ?? state.preferences;
+    const settings = playbackPreferences(theme, {
+      ...savedSettings,
+      showAppIcon: savedSettings.showAppIcon && !!hydrated?.icon,
+    });
     payload = {
       operationId: randomUUID(),
       theme,
-      duration: state.preferences.duration,
-      reducedMotion: state.preferences.reducedMotion,
-      name: target?.name ?? "TimeGate",
+      duration: settings.duration,
+      reducedMotion: settings.reducedMotion,
+      showAppIcon: settings.showAppIcon,
+      name: target?.name ?? "",
       icon: hydrated?.icon,
       preview,
     };
@@ -336,7 +324,9 @@ async function runAnimation(
       movable: false,
       show: false,
       skipTaskbar: true,
-      backgroundColor: ["paper", "ink"].includes(theme) ? "#f2efe7" : "#080e16",
+      transparent: true,
+      backgroundColor: "#00000000",
+      roundedCorners: false,
       alwaysOnTop: true,
       fullscreenable: false,
       hasShadow: false,
@@ -351,7 +341,7 @@ async function runAnimation(
     overlay = window;
     protect(window);
     window.webContents.on("before-input-event", (_e, input) => {
-      if (input.key === "Escape" && input.type === "keyDown") void finishRun();
+      if (input.key === "Escape" && input.type === "keyDown") skipRun();
     });
     window.webContents.on("render-process-gone", () => {
       void finishRun("动画渲染已退出。");
@@ -375,16 +365,46 @@ async function runAnimation(
 }
 
 function registerIPC() {
+  ipcMain.handle("settings:update", async (event, value: unknown) => {
+    mainOnly(event);
+    const next = generalSettings(value);
+    const previous = state.settings;
+    const changedLogin = next.autoStart !== previous.autoStart;
+    if (changedLogin) {
+      if (!app.isPackaged && !process.env.OPENLUDE_TEST_DATA)
+        throw new Error("请在安装版中设置开机启动");
+      app.setLoginItemSettings({ openAtLogin: next.autoStart, path: app.getPath("exe") });
+    }
+    state.settings = next;
+    try { await save(); }
+    catch (error) {
+      state.settings = previous;
+      if (changedLogin) app.setLoginItemSettings({ openAtLogin: previous.autoStart, path: app.getPath("exe") });
+      throw error;
+    }
+    nativeTheme.themeSource = next.appearance;
+    updates.autoCheck(next.autoCheckUpdates);
+    return next;
+  });
+  ipcMain.handle("updates:status", event => { mainOnly(event); return updates.status; });
+  ipcMain.handle("updates:check", event => { mainOnly(event); return updates.check(); });
+  ipcMain.handle("updates:download", event => { mainOnly(event); return updates.download(); });
+  ipcMain.handle("updates:install", event => {
+    mainOnly(event);
+    if (busy) throw new Error("请等待动画播放完成");
+    updates.install();
+  });
+  ipcMain.handle("project:open", event => { mainOnly(event); return shell.openExternal(PROJECT_URL); });
   ipcMain.handle("state", (event) => {
     mainOnly(event);
     return viewState();
   });
-  ipcMain.handle("target:add", async (event, id?: string) => {
+  ipcMain.handle("target:add", async (event) => {
     mainOnly(event);
     if (busy) throw new Error("请等待启动完成");
-    const existing = id ? findTarget(id) : null;
+    if (state.targets.length >= 200) throw new Error("最多可添加 200 个应用。");
     const selection = await dialog.showOpenDialog(main!, {
-      title: existing ? `定位 ${existing.name}` : "添加本机应用",
+      title: "添加本机应用",
       defaultPath: process.platform === "darwin" ? "/Applications" : undefined,
       properties: ["openFile"],
       filters: [
@@ -400,35 +420,46 @@ function registerIPC() {
       throw new Error("请选择有效的应用文件");
     const ownExe = app.getPath("exe");
     if (file === ownExe || ownExe.startsWith(file + path.sep))
-      throw new Error("TimeGate 自身动画请使用全屏预览，避免重复启动。");
-    const duplicate = state.targets.find((t) => t.path === file && t.id !== id);
+      throw new Error("请选择要添加启动动画的其他应用。");
+    const duplicate = state.targets.find((t) => t.path === file);
     if (duplicate) throw new Error(`已添加 ${duplicate.name}`);
-    if (existing) existing.path = file;
-    else
-      state.targets.push({
-        id: randomUUID(),
-        name: path.basename(file, path.extname(file)),
-        path: file,
-        theme: "portal",
-      });
+    state.targets.push({
+      id: randomUUID(),
+      name: path.basename(file, path.extname(file)),
+      path: file,
+      theme: "portal",
+    });
     await save();
     return viewState();
   });
   ipcMain.handle("target:remove", async (event, id: string) => {
     mainOnly(event);
     if (busy) throw new Error("请等待启动完成");
-    const target = findTarget(id);
-    if (target.builtin) target.path = null;
-    else state.targets = state.targets.filter((t) => t.id !== id);
+    findTarget(id);
+    state.targets = state.targets.filter((t) => t.id !== id);
     await save();
     return viewState();
   });
-  ipcMain.handle("target:bind", async (event, id: string, theme: unknown) => {
-    mainOnly(event);
-    findTarget(id).theme = themeId(theme);
-    await save();
-    return viewState();
-  });
+  ipcMain.handle(
+    "target:bind",
+    async (event, id: string, theme: unknown, value?: unknown) => {
+      mainOnly(event);
+      const target = findTarget(id);
+      const nextTheme = themeId(theme);
+      const nextPreferences =
+        value === undefined ? target.preferences : preferences(value);
+      const previous = { theme: target.theme, preferences: target.preferences };
+      target.theme = nextTheme;
+      target.preferences = nextPreferences;
+      try {
+        await save();
+      } catch (error) {
+        Object.assign(target, previous);
+        throw error;
+      }
+      return viewState();
+    },
+  );
   ipcMain.handle("preferences", async (event, value: unknown) => {
     mainOnly(event);
     state.preferences = preferences(value);
@@ -440,10 +471,18 @@ function registerIPC() {
     const target = findTarget(id);
     return runAnimation(target.theme, target, false);
   });
-  ipcMain.handle("preview", (event, theme: unknown, id?: string) => {
-    mainOnly(event);
-    return runAnimation(themeId(theme), id ? findTarget(id) : null, true);
-  });
+  ipcMain.handle(
+    "preview",
+    (event, theme: unknown, id?: string, value?: unknown) => {
+      mainOnly(event);
+      return runAnimation(
+        themeId(theme),
+        id ? findTarget(id) : null,
+        true,
+        value === undefined ? undefined : preferences(value),
+      );
+    },
+  );
   ipcMain.handle("overlay:payload", (event) =>
     event.sender === overlay?.webContents ? payload : null,
   );
@@ -452,7 +491,8 @@ function registerIPC() {
       !overlay ||
       event.sender !== overlay.webContents ||
       id !== payload?.operationId ||
-      launchStarted
+      launchStarted ||
+      finishing
     )
       return;
     launchStarted = true;
@@ -474,16 +514,20 @@ function registerIPC() {
     if (event.sender === overlay?.webContents && id === payload?.operationId)
       void finishRun();
   });
+  ipcMain.on("overlay:skip", (event, id: string) => {
+    if (event.sender === overlay?.webContents && id === payload?.operationId)
+      skipRun();
+  });
 }
 
 async function createMain() {
   main = new BrowserWindow({
-    width: 1220,
-    height: 830,
-    minWidth: 1000,
-    minHeight: 720,
-    title: "TimeGate",
-    backgroundColor: "#101217",
+    width: 1320,
+    height: 850,
+    minWidth: 1120,
+    minHeight: 760,
+    title: "Openlude",
+    backgroundColor: nativeTheme.shouldUseDarkColors ? "#191a1d" : "#ffffff",
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     trafficLightPosition: { x: 20, y: 19 },
     icon: renderPath("assets/branding/app-icon.png"),
@@ -517,9 +561,11 @@ else {
           ...(process.platform === "darwin"
             ? [
                 {
-                  label: "TimeGate",
+                  label: "Openlude",
                   submenu: [
                     { role: "about" as const },
+                    { label: "设置…", accelerator: "CmdOrCtrl+,", click: () => main?.webContents.send("settings:open") },
+                    { type: "separator" as const },
                     { role: "quit" as const },
                   ],
                 },
@@ -541,8 +587,11 @@ else {
         ]),
       );
       await readState();
+      nativeTheme.themeSource = state.settings.appearance;
+      updates = new UpdateManager(status => main?.webContents.send("updates:status", status));
       registerIPC();
       await createMain();
+      updates.autoCheck(state.settings.autoCheckUpdates);
     })
     .catch((error) => {
       console.error(error);
