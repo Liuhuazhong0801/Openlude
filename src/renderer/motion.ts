@@ -352,8 +352,11 @@ export function animateEmblem(
   element: HTMLElement,
   p: number,
   reduced: boolean,
+  holdEnd = false,
 ) {
-  element.style.opacity = String(smooth(0, 0.15, p) * (1 - smooth(0.8, 1, p)));
+  element.style.opacity = String(
+    smooth(0, 0.15, p) * (holdEnd ? 1 : 1 - smooth(0.8, 1, p)),
+  );
   element.style.transform = reduced
     ? "translate(-50%, -50%)"
     : `translate(-50%, -50%) translateY(${(1 - ease(p / 0.4)) * 4}px) scale(${0.98 + ease(p / 0.4) * 0.02})`;

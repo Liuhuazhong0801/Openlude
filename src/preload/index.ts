@@ -13,6 +13,7 @@ const api: DesktopAPI = {
   overlayPayload: () => ipcRenderer.invoke("overlay:payload"),
   overlayReady: (id) => ipcRenderer.send("overlay:ready", id),
   overlayFinish: (id) => ipcRenderer.send("overlay:finish", id),
+  overlaySkip: (id) => ipcRenderer.send("overlay:skip", id),
   onAnimate: (callback) => {
     const listener = () => callback();
     ipcRenderer.on("overlay:animate", listener);

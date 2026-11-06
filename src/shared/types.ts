@@ -106,5 +106,6 @@ export interface DesktopAPI {
   overlayPayload(): Promise<AnimationPayload | null>;
   overlayReady(operationId: string): void;
   overlayFinish(operationId: string): void;
+  overlaySkip(operationId: string): void;
   onAnimate(callback: () => void): () => void;
 }

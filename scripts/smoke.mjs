@@ -115,9 +115,60 @@ if CommandLine.arguments.contains("--probe-frontmost") {
   );
   return bundle;
 }
+async function traceReveals() {
+  await desktop.evaluate(({ BrowserWindow }) => {
+    globalThis.revealSamples = [];
+    globalThis.revealContent = {};
+    const setOpacity = BrowserWindow.prototype.setOpacity;
+    BrowserWindow.prototype.setOpacity = function (value) {
+      setOpacity.call(this, value);
+      if (!this.webContents.getURL().endsWith("/overlay.html")) return;
+      globalThis.revealSamples.push({
+        id: this.id,
+        at: Date.now(),
+        opacity: this.getOpacity(),
+      });
+      if (value < 0.7 && value > 0.3 && !globalThis.revealContent[this.id]) {
+        globalThis.revealContent[this.id] = "pending";
+        void this.webContents
+          .executeJavaScript(`({
+          canvas: document.querySelectorAll('canvas.motion-canvas').length,
+          emblem: Number(getComputedStyle(document.querySelector('.app-emblem')).opacity)
+        })`)
+          .then((content) => {
+            globalThis.revealContent[this.id] = content;
+          })
+          .catch(() => {});
+      }
+    };
+  });
+}
+async function revealTrace(id) {
+  return desktop.evaluate(
+    (_electron, windowId) => ({
+      samples: globalThis.revealSamples.filter((sample) => sample.id === windowId),
+      content: globalThis.revealContent[windowId],
+    }),
+    id,
+  );
+}
+function assertReveal(trace, duration) {
+  assert.ok(trace.samples.filter((s) => s.opacity > 0 && s.opacity < 1).length > 4);
+  assert.equal(trace.samples.at(-1).opacity, 0);
+  assert.ok(trace.samples.at(-1).at - trace.samples[0].at >= duration * 0.8);
+  for (let i = 1; i < trace.samples.length; i++)
+    assert.ok(trace.samples[i].opacity <= trace.samples[i - 1].opacity + 0.001);
+  assert.equal(
+    trace.content.canvas, 1, "WebGL must survive until the window is transparent",
+  );
+  assert.equal(
+    trace.content.emblem, 1, "The target identity must not vanish before the reveal",
+  );
+}
 try {
   const first = await boot();
   desktop = first.application;
+  await traceReveals();
   const page = first.page;
   assert.equal(await page.locator(".theme-card").count(), 5);
   assert.equal(await page.locator(".app-card").count(), 4);
@@ -317,6 +368,9 @@ try {
       .locator(`[data-id="${target.id}"] [data-action="launch"]`)
       .click();
     const launchOverlay = await launchWindow;
+    const launchOverlayId = await desktop.evaluate(({ BrowserWindow }) =>
+      BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().endsWith("/overlay.html")).id,
+    );
     const endOverlay = launchOverlay.waitForEvent("close");
     await launchOverlay.waitForSelector("#launch-icon:not([hidden])");
     assert.equal(
@@ -344,6 +398,12 @@ try {
     assert.equal(duplicate.ok, false);
     assert.match(duplicate.error, /进行/);
     await endOverlay;
+    const launchTrace = await revealTrace(launchOverlayId);
+    assertReveal(launchTrace, 520);
+    await fs.writeFile(
+      path.join(run, "launch-reveal.json"), JSON.stringify(launchTrace, null, 2),
+    );
+    check("The native window fades continuously while the scene and target icon remain painted");
     await until(
       () =>
         page
@@ -367,6 +427,13 @@ try {
           () => false,
         ),
       );
+      const activatedAt = Number(
+        await fs.readFile(path.join(run, "fixture-active"), "utf8"),
+      ) * 1000;
+      assert.ok(
+        activatedAt <= launchTrace.samples[0].at,
+        "Activate the target before revealing it",
+      );
       let foregroundPid;
       await until(async () => {
         const foreground = await exec(
@@ -381,6 +448,7 @@ try {
         "Foreground focus reaches the real target application",
         `target PID ${fixturePid}; foreground PID ${foregroundPid}`,
       );
+      check("The target is already active behind the overlay when the fade begins");
     }
     await fs.rename(bundle, bundle + ".moved");
     const missing = await page.evaluate(
@@ -414,6 +482,60 @@ try {
     );
     await fs.rename(bundle + ".moved", bundle);
   }
+
+  // Exercise the real native exit when the external launch promise stays pending.
+  // Stub only the OS URL opener, so no browser tab or remote service is opened.
+  await page.evaluate(() => window.timegate.remove("deepseek"));
+  await page.evaluate(() => window.timegate.bind("deepseek", "portal", {
+    duration: 600, reducedMotion: false,
+  }));
+  await desktop.evaluate(({ shell }) => {
+    globalThis.originalOpenExternal = shell.openExternal;
+    shell.openExternal = () => new Promise((resolve) => {
+      globalThis.completeTestLaunch = resolve;
+    });
+  });
+  for (const skip of [true, false]) {
+    const pendingWindow = desktop.waitForEvent("window");
+    const pendingLaunch = page.evaluate(() => window.timegate.launch("deepseek"));
+    const waitingOverlay = await pendingWindow;
+    await waitingOverlay.waitForSelector("#skip");
+    const waitingClose = waitingOverlay.waitForEvent("close");
+    const waitingStart = Date.now();
+    if (skip) await waitingOverlay.locator("#skip").click();
+    await waitingClose;
+    const elapsed = Date.now() - waitingStart;
+    assert.ok(elapsed < (skip ? 1000 : 3500), `Overlay blocked for ${elapsed}ms`);
+    await desktop.evaluate(() => globalThis.completeTestLaunch());
+    assert.equal((await pendingLaunch).ok, true);
+    check(
+      skip
+        ? "Skip releases the screen while the OS launch is still pending"
+        : "A stalled launch cannot hold the animation overlay indefinitely",
+      `${elapsed}ms`,
+    );
+  }
+  await desktop.evaluate(({ shell }) => {
+    shell.openExternal = globalThis.originalOpenExternal;
+  });
+
+  const reducedWindow = desktop.waitForEvent("window");
+  const reducedRun = page.evaluate(() =>
+    window.timegate.preview("portal", "codex", {
+      duration: 1800, reducedMotion: true,
+    }),
+  );
+  const reducedOverlay = await reducedWindow;
+  await reducedOverlay.waitForSelector("#skip");
+  const reducedId = await desktop.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().endsWith("/overlay.html")).id,
+  );
+  await reducedOverlay.waitForEvent("close");
+  assert.equal((await reducedRun).ok, true);
+  const reducedTrace = await revealTrace(reducedId);
+  assertReveal(reducedTrace, 160);
+  assert.ok(reducedTrace.samples.at(-1).at - reducedTrace.samples[0].at < 400);
+  check("Reduced motion uses a short reveal and preserves the target icon");
   await desktop.close();
   desktop = null;
   const second = await boot();

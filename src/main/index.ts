@@ -15,8 +15,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { randomUUID } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import { allowedApplication, decodeState, preferences, themeId } from "./model";
 import { applicationIcon, presetIcon } from "./icons";
+import { fadeWindowOut } from "./transition";
+import { QUICK_REVEAL_DURATION, revealDuration } from "../shared/transition";
 import type {
   AnimationPayload,
   AppState,
@@ -44,6 +47,7 @@ let launchTask: Promise<LaunchResult> | null = null;
 let activeTarget: Target | null = null;
 let resolveRun: ((value: LaunchResult) => void) | null = null;
 let watchdog: ReturnType<typeof setTimeout> | null = null;
+let overlayExit: Promise<void> | null = null;
 let state: SavedState;
 let saveQueue = Promise.resolve();
 const renderPath = (name: string) =>
@@ -263,6 +267,32 @@ async function activateTarget(target: Target): Promise<boolean> {
   return result.stdout.trim() === "True";
 }
 
+function dismissOverlay(
+  window: BrowserWindow | null,
+  duration: number,
+): Promise<void> {
+  if (!window || window.isDestroyed()) return Promise.resolve();
+  if (overlayExit) return overlayExit;
+  overlayExit = (async () => {
+    try {
+      await fadeWindowOut(window, duration);
+    } catch {
+      // A platform compositor failure should fall back to closing the overlay.
+      console.warn("Native fade was unavailable; closing the animation window.");
+    } finally {
+      if (overlay === window) overlay = null;
+      if (!window.isDestroyed()) window.destroy();
+    }
+  })();
+  return overlayExit;
+}
+
+function skipRun() {
+  // Skipping must release the screen even when the OS launch request is slow.
+  void dismissOverlay(overlay, QUICK_REVEAL_DURATION);
+  void finishRun();
+}
+
 async function finishRun(failure?: string) {
   if (!payload || finishing) return;
   finishing = true;
@@ -271,34 +301,53 @@ async function finishRun(failure?: string) {
   const current = payload;
   const target = activeTarget;
   const window = overlay;
-  overlay = null;
-  if (window && !window.isDestroyed()) window.destroy();
+  // A slow or unresponsive external application must never trap the user here.
+  const handoffDeadline = setTimeout(() => {
+    void dismissOverlay(window, QUICK_REVEAL_DURATION);
+  }, 1800);
   let result: LaunchResult = failure
     ? { ok: false, error: failure }
     : { ok: true };
-  if (!current.preview && target) {
-    const launch = launchTask
-      ? await launchTask
-      : { ok: false, error: "动画窗口未就绪，应用尚未启动。" };
-    if (!launch.ok) result = launch;
-    else {
-      const focusConfirmed = await activateTarget(target).catch(() => false);
-      if (result.ok) result.focusConfirmed = focusConfirmed;
+  try {
+    if (failure) await dismissOverlay(window, 0);
+    if (!current.preview && target) {
+      const launch = launchTask
+        ? await launchTask
+        : { ok: false, error: "动画窗口未就绪，应用尚未启动。" };
+      if (!launch.ok) result = launch;
+      else if (!failure) {
+        // Bring the real application forward while the animation still covers it.
+        result.focusConfirmed = await activateTarget(target).catch(() => false);
+        if (window && !window.isDestroyed()) await delay(120);
+      }
     }
-  }
-  if (current.preview || !result.ok) {
+    if (current.preview || !result.ok) {
+      main?.show();
+      main?.focus();
+    }
+    await dismissOverlay(
+      window,
+      revealDuration(current.reducedMotion, current.duration),
+    );
+  } catch {
+    result = { ok: false, error: "动画交接失败，请直接打开目标应用。" };
+    if (window && !window.isDestroyed()) window.destroy();
+    if (overlay === window) overlay = null;
     main?.show();
     main?.focus();
+  } finally {
+    clearTimeout(handoffDeadline);
+    const resolve = resolveRun;
+    payload = null;
+    activeTarget = null;
+    launchTask = null;
+    resolveRun = null;
+    overlayExit = null;
+    launchStarted = false;
+    busy = false;
+    finishing = false;
+    resolve?.(result);
   }
-  const resolve = resolveRun;
-  payload = null;
-  activeTarget = null;
-  launchTask = null;
-  resolveRun = null;
-  launchStarted = false;
-  busy = false;
-  finishing = false;
-  resolve?.(result);
 }
 async function runAnimation(
   theme: ThemeId,
@@ -354,7 +403,7 @@ async function runAnimation(
     overlay = window;
     protect(window);
     window.webContents.on("before-input-event", (_e, input) => {
-      if (input.key === "Escape" && input.type === "keyDown") void finishRun();
+      if (input.key === "Escape" && input.type === "keyDown") skipRun();
     });
     window.webContents.on("render-process-gone", () => {
       void finishRun("动画渲染已退出。");
@@ -477,7 +526,8 @@ function registerIPC() {
       !overlay ||
       event.sender !== overlay.webContents ||
       id !== payload?.operationId ||
-      launchStarted
+      launchStarted ||
+      finishing
     )
       return;
     launchStarted = true;
@@ -498,6 +548,10 @@ function registerIPC() {
   ipcMain.on("overlay:finish", (event, id: string) => {
     if (event.sender === overlay?.webContents && id === payload?.operationId)
       void finishRun();
+  });
+  ipcMain.on("overlay:skip", (event, id: string) => {
+    if (event.sender === overlay?.webContents && id === payload?.operationId)
+      skipRun();
   });
 }
 

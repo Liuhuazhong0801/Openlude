@@ -1,0 +1,84 @@
+{
+  "platform": "darwin",
+  "run": "/Users/yahaha/projects/TimeGate/test-results/run-1793946387932",
+  "checks": [
+    {
+      "name": "Desktop boots with five themes and four presets"
+    },
+    {
+      "name": "All presets have app icons; default scene uses the actual target identity only"
+    },
+    {
+      "name": "Minimum window size keeps playback and save controls visible"
+    },
+    {
+      "name": "Switching apps updates identity and preserves unsaved drafts without persisting"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: portal"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: aurora"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: paper"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: pixel"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: ink"
+    },
+    {
+      "name": "Full-screen preview uses the target icon and unsaved duration, with no launcher tagline"
+    },
+    {
+      "name": "Escape removes the full-screen overlay"
+    },
+    {
+      "name": "Native file selection and theme binding persist"
+    },
+    {
+      "name": "Actual launch uses the custom app's bundle icon and name"
+    },
+    {
+      "name": "The native window fades continuously while the scene and target icon remain painted"
+    },
+    {
+      "name": "Real macOS app starts; duplicate launch is rejected; overlay is removed",
+      "detail": "2931ms"
+    },
+    {
+      "name": "Foreground focus reaches the real target application",
+      "detail": "target PID 32169; foreground PID 32169"
+    },
+    {
+      "name": "The target is already active behind the overlay when the fade begins"
+    },
+    {
+      "name": "Missing application path fails without leaving an overlay"
+    },
+    {
+      "name": "Unavailable icon falls back to the target name, never the launcher logo"
+    },
+    {
+      "name": "Skip releases the screen while the OS launch is still pending",
+      "detail": "210ms"
+    },
+    {
+      "name": "A stalled launch cannot hold the animation overlay indefinitely",
+      "detail": "2348ms"
+    },
+    {
+      "name": "Reduced motion uses a short reveal and preserves the target icon"
+    },
+    {
+      "name": "Preferences and theme bindings survive restart"
+    },
+    {
+      "name": "No renderer errors"
+    }
+  ],
+  "pending": [],
+  "errors": []
+}

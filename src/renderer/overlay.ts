@@ -1,5 +1,6 @@
 import "./style.css";
 import { MotionScene, animateEmblem } from "./motion";
+import { revealDuration } from "../shared/transition";
 const host = document.querySelector<HTMLElement>("#overlay-stage")!;
 const emblem = host.querySelector<HTMLElement>(".app-emblem")!;
 let scene: MotionScene | null = null;
@@ -9,7 +10,7 @@ if (payload) {
   const finish = () => {
     if (completed) return;
     completed = true;
-    scene?.dispose();
+    // Preserve the final frame and app identity until the native window has faded.
     window.timegate.overlayFinish(payload.operationId);
   };
   document.querySelector("#launch-name")!.textContent = payload.name;
@@ -33,10 +34,17 @@ if (payload) {
   }
   animateEmblem(emblem, 0, payload.reducedMotion);
   window.timegate.onAnimate(() => {
+    const totalDuration = payload.reducedMotion
+      ? Math.min(payload.duration, 650)
+      : payload.duration;
+    const motionDuration = Math.max(
+      240,
+      totalDuration - revealDuration(payload.reducedMotion, payload.duration),
+    );
     if (scene)
       void scene
-        .play(payload.duration, payload.reducedMotion, (p) =>
-          animateEmblem(emblem, p, payload.reducedMotion),
+        .play(motionDuration, payload.reducedMotion, (p) =>
+          animateEmblem(emblem, p, payload.reducedMotion, true),
         )
         .then(finish);
     else {
@@ -45,13 +53,15 @@ if (payload) {
         duration: 350,
         fill: "forwards",
       });
-      setTimeout(finish, 650);
+      setTimeout(finish, motionDuration);
     }
   });
-  document.querySelector("#skip")!.addEventListener("click", finish);
+  const skip = () => window.timegate.overlaySkip(payload.operationId);
+  document.querySelector("#skip")!.addEventListener("click", skip);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") finish();
+    if (e.key === "Escape") skip();
   });
+  window.addEventListener("pagehide", () => scene?.dispose(), { once: true });
   requestAnimationFrame(() =>
     requestAnimationFrame(() =>
       window.timegate.overlayReady(payload.operationId),
