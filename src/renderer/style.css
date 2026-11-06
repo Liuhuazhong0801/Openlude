@@ -364,23 +364,6 @@ img {
 .selected .theme-tick {
   display: flex;
 }
-.portal-thumbnail {
-  position: absolute;
-  inset: 0;
-  background: #15191e;
-}
-.portal-thumbnail i {
-  position: absolute;
-  border: 1px solid #858d9744;
-  border-radius: 5px;
-  inset: 12% 10%;
-}
-.portal-thumbnail i:nth-child(2) {
-  inset: 22% 20%;
-}
-.portal-thumbnail i:nth-child(3) {
-  inset: 32% 30%;
-}
 .preview-section {
   display: flex;
   flex-direction: column;
@@ -401,7 +384,7 @@ img {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #15191e;
+  background: #080e16;
   color: #e8eaed;
 }
 #preview-stage {
@@ -435,6 +418,9 @@ img {
   pointer-events: none;
   max-width: 70%;
   z-index: 1;
+}
+.app-emblem[hidden] {
+  display: none;
 }
 .app-emblem img {
   width: 80px;
@@ -557,6 +543,9 @@ input[type="range"] {
   font-size: 11px;
   color: var(--muted);
   margin-top: 5px;
+}
+.toggle-line + .toggle-line {
+  margin-top: 22px;
 }
 .toggle-line input {
   position: absolute;

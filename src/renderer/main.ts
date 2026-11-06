@@ -6,7 +6,8 @@ import {
   type Preferences,
   type ViewTarget,
 } from "../shared/types";
-import { MotionScene, animateEmblem } from "./motion";
+import { MotionScene } from "./motion";
+import { LaunchPlayback } from "./playback";
 
 const paths: Record<string, string> = {
   play: "M9 5l11 7-11 7V5z",
@@ -51,7 +52,7 @@ $("#app").innerHTML = `
     </header>
     <section class="themes" aria-labelledby="themes-title">
       <h2 id="themes-title">动画主题</h2>
-      <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art">${t.id === "portal" ? '<div class="portal-thumbnail"><i></i><i></i><i></i></div>' : `<img src="./assets/themes/${t.id}.png" alt="">`}<span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
+      <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art"><img src="./assets/themes/${t.id}.png" alt=""><span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
     </section>
     <section class="preview-section" aria-labelledby="preview-title">
       <div class="section-heading"><h2 id="preview-title">预览</h2><span id="theme-name"></span></div>
@@ -63,7 +64,8 @@ $("#app").innerHTML = `
   <aside class="inspector" id="settings" aria-labelledby="settings-title">
     <h2 id="settings-title">动画设置</h2>
     <div class="setting-block"><div class="field-heading"><label for="duration">时长</label><div class="number-field"><input id="duration-value" aria-label="动画时长（秒）" type="number" min="0.6" max="3" step="0.1" value="1.8"><span>秒</span></div></div><input id="duration" type="range" min="600" max="3000" step="100" value="1800"><div class="range-limits"><span>0.6 秒</span><span>3.0 秒</span></div></div>
-    <label class="toggle-line"><span>柔和模式<small>减少位移，使用简短淡入</small></span><input type="checkbox" id="reduced-motion"><span class="switch" aria-hidden="true"></span></label>
+    <label class="toggle-line"><span>显示应用图标<small>先显示图标和名称，再进入动画</small></span><input type="checkbox" id="show-app-icon" checked><span class="switch" aria-hidden="true"></span></label>
+    <label class="toggle-line"><span>柔和模式<small>减少位移，缩短过渡时间</small></span><input type="checkbox" id="reduced-motion"><span class="switch" aria-hidden="true"></span></label>
     <div class="binding-section"><h2>应用于</h2><div class="binding-target"><img id="binding-icon" alt="" hidden><strong id="binding-name"></strong></div><p id="binding-hint"></p></div>
     <div class="inspector-bottom"><p id="save-status" aria-live="polite"></p><button class="button primary" id="apply" disabled>保存绑定</button></div>
   </aside>
@@ -78,6 +80,7 @@ let state: AppState;
 let selectedTarget = "";
 const drafts = new Map<string, Draft>();
 let scene: MotionScene | null = null;
+let playback: LaunchPlayback;
 let localPlaying = false;
 let nativeBusy = false;
 let saving = false;
@@ -106,7 +109,8 @@ function changed(t: ViewTarget) {
     !!d &&
     (d.theme !== s.theme ||
       d.duration !== s.duration ||
-      d.reducedMotion !== s.reducedMotion)
+      d.reducedMotion !== s.reducedMotion ||
+      d.showAppIcon !== s.showAppIcon)
   );
 }
 function toast(message: string, error = false) {
@@ -151,13 +155,11 @@ function setImage(selector: string, source?: string, name = "") {
     .catch(() => {});
 }
 function resetEmblem() {
-  emblem.style.opacity = "1";
-  emblem.style.transform = "translate(-50%, -50%)";
-  emblem.style.filter = "none";
+  playback?.reset(draft().showAppIcon);
 }
 function stopPreview() {
   ++playbackGeneration;
-  scene?.stop();
+  playback?.stop();
   localPlaying = false;
   resetEmblem();
   $("#preview-progress").style.width = "0%";
@@ -192,7 +194,7 @@ function updateControls() {
   $("#launch-target").title =
     t && changed(t) ? "启动将使用已保存的设置" : "播放动画并打开应用";
   for (const element of document.querySelectorAll<HTMLInputElement>(
-    "#duration, #duration-value, #reduced-motion",
+    "#duration, #duration-value, #reduced-motion, #show-app-icon",
   ))
     element.disabled = !t || busy;
   for (const element of document.querySelectorAll<HTMLButtonElement>(
@@ -256,6 +258,7 @@ function updateSelection() {
   $<HTMLInputElement>("#duration").value = String(d.duration);
   $<HTMLInputElement>("#duration-value").value = (d.duration / 1000).toFixed(1);
   $<HTMLInputElement>("#reduced-motion").checked = d.reducedMotion;
+  $<HTMLInputElement>("#show-app-icon").checked = d.showAppIcon;
   $("#time-label").textContent = `${(d.duration / 1000).toFixed(1)} 秒`;
   stopPreview();
   scene?.setTheme(d.theme);
@@ -335,6 +338,7 @@ applyButton.addEventListener("click", () => {
       state = await window.timegate.bind(id, d.theme, {
         duration: d.duration,
         reducedMotion: d.reducedMotion,
+        showAppIcon: d.showAppIcon,
       });
       drafts.delete(id);
       updateSelection();
@@ -352,13 +356,14 @@ playButton.addEventListener("click", () => {
     const generation = ++playbackGeneration;
     localPlaying = true;
     updateControls();
-    await scene.play(d.duration, d.reducedMotion, (p) => {
-      animateEmblem(emblem, p, d.reducedMotion);
-      $("#preview-progress").style.width = `${p * 100}%`;
-      $(".playback-track").setAttribute(
-        "aria-valuenow",
-        String(Math.round(p * 100)),
-      );
+    await playback.play(d, {
+      onProgress: (p) => {
+        $("#preview-progress").style.width = `${p * 100}%`;
+        $(".playback-track").setAttribute(
+          "aria-valuenow",
+          String(Math.round(p * 100)),
+        );
+      },
     });
     if (generation !== playbackGeneration) return;
     localPlaying = false;
@@ -373,6 +378,7 @@ $("#fullscreen").addEventListener("click", () => {
       window.timegate.preview(d.theme, selectedTarget, {
         duration: d.duration,
         reducedMotion: d.reducedMotion,
+        showAppIcon: d.showAppIcon,
       }),
     ),
   );
@@ -395,6 +401,12 @@ $("#duration-value").addEventListener("change", (event) =>
 );
 $("#reduced-motion").addEventListener("change", (event) => {
   draft().reducedMotion = (event.target as HTMLInputElement).checked;
+  stopPreview();
+  renderTargets();
+});
+$("#show-app-icon").addEventListener("change", (event) => {
+  draft().showAppIcon = (event.target as HTMLInputElement).checked;
+  stopPreview();
   renderTargets();
 });
 const help = $<HTMLDialogElement>("#help");
@@ -407,7 +419,10 @@ document.addEventListener("keydown", (event) => {
     if (state) updateControls();
   }
 });
-window.addEventListener("beforeunload", () => scene?.dispose());
+window.addEventListener("beforeunload", () => {
+  playback?.stop();
+  scene?.dispose();
+});
 
 try {
   state = await window.timegate.state();
@@ -419,6 +434,7 @@ try {
     stage.classList.add("fallback-stage");
     toast("此设备暂无法绘制动态预览；启动时将使用简短淡入。", true);
   }
+  playback = new LaunchPlayback(scene, emblem);
   selectTarget(state.targets[0]?.id ?? "");
 } catch (error) {
   toast(`初始化失败：${String(error)}`, true);

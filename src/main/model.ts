@@ -18,10 +18,15 @@ export function preferences(value: unknown): Preferences {
     !Number.isFinite(p.duration) ||
     p.duration < 600 ||
     p.duration > 3000 ||
-    typeof p.reducedMotion !== "boolean"
+    typeof p.reducedMotion !== "boolean" ||
+    (p.showAppIcon !== undefined && typeof p.showAppIcon !== "boolean")
   )
     throw new Error("动画设置无效");
-  return { duration: Math.round(p.duration), reducedMotion: p.reducedMotion };
+  return {
+    duration: Math.round(p.duration),
+    reducedMotion: p.reducedMotion,
+    showAppIcon: p.showAppIcon ?? true,
+  };
 }
 export function allowedApplication(file: string, platform: string): boolean {
   if (typeof file !== "string" || file.includes("\0")) return false;

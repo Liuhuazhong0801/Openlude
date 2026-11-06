@@ -119,6 +119,7 @@ async function traceReveals() {
   await desktop.evaluate(({ BrowserWindow }) => {
     globalThis.revealSamples = [];
     globalThis.revealContent = {};
+    globalThis.revealFrames = {};
     const setOpacity = BrowserWindow.prototype.setOpacity;
     BrowserWindow.prototype.setOpacity = function (value) {
       setOpacity.call(this, value);
@@ -128,6 +129,14 @@ async function traceReveals() {
         at: Date.now(),
         opacity: this.getOpacity(),
       });
+      const frames = globalThis.revealFrames[this.id] ??= {};
+      const frameKey = value < 0.25 ? "late" : value < 0.7 ? "early" : null;
+      if (frameKey && value > 0 && !frames[frameKey]) {
+        frames[frameKey] = "pending";
+        void this.webContents.capturePage().then((image) => {
+          frames[frameKey] = image.resize({ width: 640 }).toPNG().toString("base64");
+        }).catch(() => {});
+      }
       if (value < 0.7 && value > 0.3 && !globalThis.revealContent[this.id]) {
         globalThis.revealContent[this.id] = "pending";
         void this.webContents
@@ -148,6 +157,7 @@ async function revealTrace(id) {
     (_electron, windowId) => ({
       samples: globalThis.revealSamples.filter((sample) => sample.id === windowId),
       content: globalThis.revealContent[windowId],
+      frames: globalThis.revealFrames[windowId],
     }),
     id,
   );
@@ -161,9 +171,7 @@ function assertReveal(trace, duration) {
   assert.equal(
     trace.content.canvas, 1, "WebGL must survive until the window is transparent",
   );
-  assert.equal(
-    trace.content.emblem, 1, "The target identity must not vanish before the reveal",
-  );
+  assert.equal(trace.content.emblem, 0, "The identity intro must end before the reveal");
 }
 try {
   const first = await boot();
@@ -260,10 +268,19 @@ try {
   check(
     "Switching apps updates identity and preserves unsaved drafts without persisting",
   );
+  await page.locator("#show-app-icon").uncheck();
+  assert.equal(await page.locator("#preview-stage .app-emblem").isHidden(), true);
+  await page.locator('[data-id="deepseek"] [data-action="select"]').click();
+  assert.equal(await page.locator("#show-app-icon").isChecked(), true);
+  await page.locator('[data-id="codex"] [data-action="select"]').click();
+  assert.equal(await page.locator("#show-app-icon").isChecked(), false);
+  assert.equal((await page.evaluate(() => window.timegate.state())).targets[0].preferences, undefined);
+  await page.locator("#show-app-icon").check();
+  check("App icon visibility is an independent per-app draft until saved");
   for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
     await page.locator(`.theme-card[data-theme="${theme}"]`).click();
     await page.locator("#play").click();
-    await delay(450);
+    await delay(900);
     const box = await page.locator("#preview-stage").boundingBox();
     const clip = {
       x: box.x + box.width * 0.2,
@@ -321,6 +338,17 @@ try {
   await until(async () => (await desktop.windows()).length === 1);
   check("Escape removes the full-screen overlay");
   await until(() => page.locator("#fullscreen").isEnabled());
+  await page.locator("#show-app-icon").uncheck();
+  const hiddenIconWindow = desktop.waitForEvent("window");
+  await page.locator("#fullscreen").click();
+  const hiddenIconOverlay = await hiddenIconWindow;
+  await hiddenIconOverlay.waitForSelector("#skip");
+  assert.equal(await hiddenIconOverlay.locator(".app-emblem").isHidden(), true);
+  const hiddenIconPayload = await hiddenIconOverlay.evaluate(() => window.timegate.overlayPayload());
+  assert.equal(hiddenIconPayload.showAppIcon, false);
+  await hiddenIconOverlay.waitForEvent("close");
+  await until(() => page.locator("#fullscreen").isEnabled());
+  check("Disabling app icons skips the identity stage in the actual native overlay");
   await page.locator("#apply").click();
   await until(() => page.locator("#apply").isDisabled());
 
@@ -353,13 +381,13 @@ try {
     await page.locator("#duration").fill("2600");
     await page.locator("#duration").dispatchEvent("input");
     await page.locator("#reduced-motion").uncheck();
-    await page.locator('.theme-card[data-theme="paper"]').click();
+    await page.locator('.theme-card[data-theme="portal"]').click();
     await page.locator("#apply").click();
     await until(
       async () =>
         (await page.evaluate(() => window.timegate.state())).targets.find(
           (t) => t.id === target.id,
-        ).theme === "paper",
+        ).theme === "portal",
     );
     check("Native file selection and theme binding persist");
     const start = Date.now();
@@ -399,11 +427,19 @@ try {
     assert.match(duplicate.error, /进行/);
     await endOverlay;
     const launchTrace = await revealTrace(launchOverlayId);
-    assertReveal(launchTrace, 520);
+    assertReveal(launchTrace, 650);
+    assert.ok(launchTrace.frames.early && launchTrace.frames.early !== "pending");
+    assert.ok(launchTrace.frames.late && launchTrace.frames.late !== "pending");
+    assert.notEqual(launchTrace.frames.early, launchTrace.frames.late,
+      "The portal must keep moving while the native overlay becomes transparent");
+    for (const [name, png] of Object.entries(launchTrace.frames))
+      await fs.writeFile(path.join(run, `reveal-${name}.png`), Buffer.from(png, "base64"));
     await fs.writeFile(
-      path.join(run, "launch-reveal.json"), JSON.stringify(launchTrace, null, 2),
+      path.join(run, "launch-reveal.json"), JSON.stringify({
+        ...launchTrace, frames: undefined, motionContinuesDuringReveal: true,
+      }, null, 2),
     );
-    check("The native window fades continuously while the scene and target icon remain painted");
+    check("The portal keeps moving during the native fade, after the icon intro ends");
     await until(
       () =>
         page
@@ -535,7 +571,7 @@ try {
   const reducedTrace = await revealTrace(reducedId);
   assertReveal(reducedTrace, 160);
   assert.ok(reducedTrace.samples.at(-1).at - reducedTrace.samples[0].at < 400);
-  check("Reduced motion uses a short reveal and preserves the target icon");
+  check("Reduced motion uses a short reveal after the icon intro");
   await desktop.close();
   desktop = null;
   const second = await boot();
@@ -546,10 +582,11 @@ try {
     2600,
   );
   assert.equal(restored.preferences.duration, initial.preferences.duration);
+  assert.equal(restored.targets.find((t) => t.id === "codex").preferences.showAppIcon, false);
   if (process.platform === "darwin")
     assert.equal(
       restored.targets.find((t) => t.name === "TimeGate Launch Fixture").theme,
-      "paper",
+      "portal",
     );
   check("Preferences and theme bindings survive restart");
   assert.deepEqual(errors, []);

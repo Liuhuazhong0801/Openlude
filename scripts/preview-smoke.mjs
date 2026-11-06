@@ -67,7 +67,7 @@ try {
   };
   for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
     await page.locator(`#theme-picker [data-theme="${theme}"]`).click();
-    await page.waitForTimeout(550);
+    await page.waitForTimeout(900);
     const early = await page.screenshot({ clip });
     await page.waitForTimeout(650);
     const later = await page.screenshot({ clip });
@@ -83,6 +83,19 @@ try {
     console.log("PASS", theme);
     await page.waitForTimeout(1500);
   }
+  await page.locator("#demo-icon").uncheck();
+  assert.equal(await page.locator(".app-emblem").isHidden(), true);
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
+  report.checks.push("Icon disabled: motion starts directly without an identity stage");
+  await page.locator("#demo-icon").check();
+  await page.waitForTimeout(250);
+  assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "1");
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "0");
+  await page.waitForTimeout(650);
+  assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "0");
+  assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");
+  report.checks.push("Icon enabled: identity appears alone, fades out, then motion appears");
   assert.deepEqual(errors, []);
   await page.screenshot({ path: path.join(out, "preview-workspace.png") });
   await context.close();

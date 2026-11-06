@@ -135,6 +135,7 @@ async function initialState(): Promise<SavedState> {
     targets: presets,
     preferences: {
       duration: 1800,
+      showAppIcon: true,
       reducedMotion:
         systemPreferences.getAnimationSettings().prefersReducedMotion,
     },
@@ -369,6 +370,7 @@ async function runAnimation(
       theme,
       duration: settings.duration,
       reducedMotion: settings.reducedMotion,
+      showAppIcon: settings.showAppIcon,
       name: target?.name ?? "",
       icon: hydrated?.icon,
       preview,
@@ -386,9 +388,7 @@ async function runAnimation(
       skipTaskbar: true,
       backgroundColor: ["paper", "ink"].includes(theme)
         ? "#f2efe7"
-        : theme === "portal"
-          ? "#15191e"
-          : "#080e16",
+        : "#080e16",
       alwaysOnTop: true,
       fullscreenable: false,
       hasShadow: false,

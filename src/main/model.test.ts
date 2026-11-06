@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { allowedApplication, decodeState, preferences, themeId } from "./model";
+import { animationDuration, animationFrame } from "../shared/transition";
 test("platform paths support spaces and Unicode, reject executable substitutions", () => {
   assert.equal(allowedApplication("/Applications/豆包.app", "darwin"), true);
   assert.equal(
@@ -21,6 +22,7 @@ test("settings reject values that could leave an overlay stuck", () => {
   assert.deepEqual(preferences({ duration: 1400, reducedMotion: true }), {
     duration: 1400,
     reducedMotion: true,
+    showAppIcon: true,
   });
   assert.throws(() => themeId("unknown"));
 });
@@ -57,10 +59,11 @@ test("per-app settings preserve legacy defaults and reject invalid overrides", (
   };
   const decoded = decodeState(state);
   assert.equal(decoded.targets[0].preferences, undefined);
-  assert.deepEqual(decoded.preferences, state.preferences);
+  assert.deepEqual(decoded.preferences, { ...state.preferences, showAppIcon: true });
   assert.deepEqual(decoded.targets[1].preferences, {
     duration: 900,
     reducedMotion: true,
+    showAppIcon: true,
   });
   assert.throws(() =>
     decodeState({
@@ -73,4 +76,28 @@ test("per-app settings preserve legacy defaults and reject invalid overrides", (
       ],
     }),
   );
+});
+test("the app icon is optional, defaults on for old settings and rejects invalid values", () => {
+  const settings = { duration: 1800, reducedMotion: false };
+  assert.equal(preferences(settings).showAppIcon, true);
+  assert.equal(preferences({ ...settings, showAppIcon: false }).showAppIcon, false);
+  for (const showAppIcon of [null, "false", 0, []])
+    assert.throws(() => preferences({ ...settings, showAppIcon }));
+});
+test("identity precedes motion and motion continues during the reveal", () => {
+  const settings = { duration: 1800, reducedMotion: false, showAppIcon: true };
+  const intro = animationFrame(200, settings);
+  assert.equal(intro.iconOpacity, 1);
+  assert.equal(intro.sceneOpacity, 0);
+  const motion = animationFrame(900, settings);
+  assert.equal(motion.iconOpacity, 0);
+  assert.equal(motion.sceneOpacity, 1);
+  const tail = animationFrame(1500, settings);
+  assert.ok(tail.coverOpacity > 0 && tail.coverOpacity < 1);
+  assert.ok(tail.motionProgress > motion.motionProgress && tail.motionProgress < 1);
+  assert.ok(animationFrame(2000, settings).motionProgress > 1);
+  const withoutIcon = animationFrame(100, { ...settings, showAppIcon: false });
+  assert.equal(withoutIcon.iconOpacity, 0);
+  assert.ok(withoutIcon.sceneOpacity > 0);
+  assert.equal(animationDuration({ ...settings, reducedMotion: true }), 650);
 });

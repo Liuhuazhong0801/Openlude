@@ -246,3 +246,6 @@ footer p {
     flex-direction: column;
   }
 }
+.app-emblem[hidden] {
+  display: none;
+}

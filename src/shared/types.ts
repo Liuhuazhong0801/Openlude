@@ -3,8 +3,8 @@ export const THEMES = [
     id: "portal",
     name: "光环穿梭",
     en: "PORTAL",
-    description: "银灰轮廓缓缓展开，显现应用。",
-    motion: "轮廓展开 · 轻缓景深",
+    description: "逐层穿过光环，进入纵深空间。",
+    motion: "三维隧道 · 镜头穿行",
     light: false,
     accent: "#8cd8d0",
   },
@@ -62,6 +62,7 @@ export interface ViewTarget extends Target {
 export interface Preferences {
   duration: number;
   reducedMotion: boolean;
+  showAppIcon: boolean;
 }
 export interface SavedState {
   version: 1;
@@ -78,6 +79,7 @@ export interface AnimationPayload {
   theme: ThemeId;
   duration: number;
   reducedMotion: boolean;
+  showAppIcon: boolean;
   name: string;
   icon?: string;
   preview: boolean;
