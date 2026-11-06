@@ -1,0 +1,82 @@
+{
+  "name": "timegate",
+  "productName": "TimeGate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A desktop launcher with procedural launch animations",
+  "author": "TimeGate",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.renderer.json && tsc --noEmit -p tsconfig.main.json",
+    "build": "npm run typecheck && tsc -p tsconfig.main.json && vite build",
+    "start": "electron .",
+    "dev": "npm run build && electron .",
+    "test": "node --test dist-electron/main/model.test.js",
+    "test:desktop": "node scripts/smoke.mjs",
+    "build:preview": "node scripts/build-preview.mjs",
+    "test:preview": "node scripts/preview-smoke.mjs",
+    "pack:mac": "npm run build && electron-builder --mac dir",
+    "pack:win": "npm run build && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@types/node": "^24.0.0",
+    "@types/three": "^0.187.0",
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.6"
+  },
+  "build": {
+    "appId": "studio.timegate.desktop",
+    "productName": "TimeGate",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "dist-renderer/**/*",
+      "native/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        "dir"
+      ],
+      "icon": "public/assets/branding/app-icon.png",
+      "identity": "-"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "public/assets/branding/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+      {
+        "from": "native",
+        "to": "native"
+      }
+    ]
+  },
+  "engines": {
+    "node": ">=24.14.0 <25"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liuhuazhong0801/TimeGate.git"
+  },
+  "homepage": "https://github.com/Liuhuazhong0801/TimeGate#readme",
+  "bugs": {
+    "url": "https://github.com/Liuhuazhong0801/TimeGate/issues"
+  }
+}

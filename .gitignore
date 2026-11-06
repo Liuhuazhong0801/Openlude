@@ -1,0 +1,25 @@
+node_modules/
+dist-preview/
+dist-electron/
+dist-renderer/
+release/
+test-results/
+.DS_Store
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.local
+
+# Generated artifacts and scratch files
+*.log
+*.tsbuildinfo
+coverage/
+work/
+outputs/
+
+# Editor state
+.idea/
+*.swp
+*.swo

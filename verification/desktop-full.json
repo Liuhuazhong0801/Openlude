@@ -1,0 +1,49 @@
+{
+  "platform": "darwin",
+  "run": "test-results/run-1793939494938",
+  "checks": [
+    {
+      "name": "Desktop boots with five themes and four presets"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: portal"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: aurora"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: paper"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: pixel"
+    },
+    {
+      "name": "Procedural motion changes pixels outside the logo: ink"
+    },
+    {
+      "name": "Escape removes the full-screen overlay"
+    },
+    {
+      "name": "Native file selection and theme binding persist"
+    },
+    {
+      "name": "Real macOS app starts; duplicate launch is rejected; overlay is removed",
+      "detail": "2948ms"
+    },
+    {
+      "name": "Foreground focus reaches the real target application",
+      "detail": "target PID 94046; foreground PID 94046"
+    },
+    {
+      "name": "Missing application path fails without leaving an overlay"
+    },
+    {
+      "name": "Preferences and theme bindings survive restart"
+    },
+    {
+      "name": "No renderer errors"
+    }
+  ],
+  "pending": [],
+  "errors": []
+}

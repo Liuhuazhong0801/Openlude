@@ -1,0 +1,108 @@
+{
+  "project": "TimeGate (working name)",
+  "scope": "多主题桌面应用启动动画视觉素材",
+  "generationMode": "built-in image_gen",
+  "createdAt": "2026-11-06",
+  "assetStatus": "生成式位图素材与视觉关键帧；动画时间轴和独立动态图层尚未实现。",
+  "branding": {
+    "file": "branding/app-icon.png",
+    "promptKey": "icon_universal",
+    "usage": "工具自身的通用图标候选，以三层窗口展开表达启动和动效。"
+  },
+  "alternates": [
+    {
+      "file": "alternates/app-icon-portal.png",
+      "promptKey": "icon",
+      "usage": "早期隧道主题图标概念，保留为备选。"
+    }
+  ],
+  "themes": [
+    {
+      "id": "portal",
+      "name": "光环穿梭",
+      "file": "themes/portal.png",
+      "promptKey": "tunnel",
+      "appearance": "dark",
+      "foreground": "#F3F5F7",
+      "motionDirection": "多层窗口由远及近穿梭，中央应用图标淡入。",
+      "durationSuggestionMs": 1400,
+      "palette": [
+        "#10171C",
+        "#D7DEE4",
+        "#75E0D0"
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "极光流体",
+      "file": "themes/aurora.png",
+      "promptKey": "aurora",
+      "appearance": "dark",
+      "foreground": "#F4F6FA",
+      "motionDirection": "柔光丝带沿边缘流动，光泽经过后显露中央图标。",
+      "durationSuggestionMs": 1200,
+      "palette": [
+        "#071224",
+        "#4DE0C6",
+        "#F3A6B6",
+        "#F8DFB8"
+      ]
+    },
+    {
+      "id": "paper",
+      "name": "几何折叠",
+      "file": "themes/paper.png",
+      "promptKey": "paper",
+      "appearance": "light",
+      "foreground": "#28313D",
+      "motionDirection": "纸片向四周展开，轻微回弹后显露中央图标。",
+      "durationSuggestionMs": 1100,
+      "palette": [
+        "#F3F0E8",
+        "#325CE8",
+        "#E2785D",
+        "#F7E6A4"
+      ]
+    },
+    {
+      "id": "pixel",
+      "name": "像素聚合",
+      "file": "themes/pixel.png",
+      "promptKey": "pixel",
+      "appearance": "dark",
+      "foreground": "#F2F5FF",
+      "motionDirection": "方块分组聚合形成窗口轮廓，中央图标清晰出现。",
+      "durationSuggestionMs": 1000,
+      "palette": [
+        "#0D1428",
+        "#3C62FE",
+        "#FFB44C",
+        "#E6EBFF"
+      ]
+    },
+    {
+      "id": "ink",
+      "name": "水墨晕染",
+      "file": "themes/ink.png",
+      "promptKey": "ink",
+      "appearance": "light",
+      "foreground": "#25292B",
+      "motionDirection": "墨迹缓慢晕开再收边，用柔和遮罩显露中央图标。",
+      "durationSuggestionMs": 1500,
+      "palette": [
+        "#F2EFE7",
+        "#25292B",
+        "#A9AAA5"
+      ]
+    }
+  ],
+  "usageNotes": [
+    "主题可绑定到任意应用，不与 Codex、WorkBuddy、DeepSeek 或豆包一一固定配对。",
+    "应用名称、图标、状态文字由运行时叠加，生成的主题图片没有内嵌文案或第三方品牌。",
+    "五张主题图是合成背景和风格关键帧，没有独立的纸片、流体、粒子或窗口图层。",
+    "可直接用于主题缩略图、静态启动背景和简单淡入淡出。独立形变、折叠、聚合等效果需要后续通过渲染器或拆分素材实现。",
+    "时长为后续动画设计建议，不代表已经生成了相应时长的视频。",
+    "像素尺寸和透明度以 asset-metadata.json 的实测值为准。",
+    "通用图标与早期备选保留真实透明外缘，后续桌面图标封装需输出对应平台格式。"
+  ]
+}

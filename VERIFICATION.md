@@ -1,0 +1,69 @@
+# TimeGate 0.1 验证记录
+
+日期：2026-11-06。此交付为第一版可运行动效样机，用于确认运动方式和启动流程，尚未完成双平台发布验收。
+
+## 当前环境
+
+- macOS 26.6.2，Apple Silicon / arm64。
+- Node.js 24.14.1，Electron 45.2.3，Three.js 0.187.0。
+- macOS 的 WebGL 使用 Metal 后端；浏览器预览使用本机 Chrome 的隔离测试上下文。
+
+## 已验证
+
+| 范围 | 实际结果 |
+| --- | --- |
+| TypeScript 与构建 | `npm run build` 通过 |
+| 配置与路径校验 | 3 项单元测试通过；覆盖 Windows 含空格、中文路径，异常时长和持久化配置 |
+| 动效预览 | 五种主题均能播放；比较中央图标之外的场景，确认画面随时间变化；无脚本错误 |
+| 桌面工作台 | 五种主题与四个应用预设正常显示 |
+| 全屏退出 | Esc 能在播放结束前关闭动画窗口 |
+| 应用绑定 | 使用测试替身提供文件选择结果，实际走添加、绑定和保存流程；未人工操作系统文件选择器 |
+| 本机启动 | 编译独立 Swift 测试应用，通过 TimeGate 请求启动；该应用写出启动标记，证明进程实际进入运行 |
+| 前台切换 | 解锁后完成补测；动画窗口关闭后读取系统当前前台进程，PID 与目标应用一致，同时观察到目标应用的激活事件 |
+| 重复启动 | 动画进行时，第二次启动被拒绝 |
+| 失效路径 | 移动测试应用后，报告路径失效，不遗留动画窗口 |
+| 持久化 | 重启后保留动画时长和主题绑定 |
+| macOS 打包产物 | 实际启动 `.app`，工作台加载成功；全屏极光动效完成并自动关闭；ad-hoc 签名验证通过 |
+
+动效预览录屏来自浏览器运行同一份 `motion.ts` 的实际画面，视频裁切到动画画布区域。它不证明真实应用的启动时间，也不是目标应用窗口的录屏。
+
+2026-11-06 解锁后，在项目目录执行完整桌面测试，未设置 `TIMEGATE_SKIP_FOCUS_ASSERT`。13 项检查全部通过，`pending` 和 `errors` 均为空。目标进程 PID 与系统前台进程 PID 均为 94046。构建与 3 项配置校验测试也通过。
+
+当前完整报告：`verification/desktop-full.json`。之前锁屏运行的部分报告仅作历史排查记录，不再代表最新状态。
+
+仓库初始化时重新完成 `npm ci`、构建、3 项单元测试和单文件预览导出。`npm audit --omit=dev` 报告 0 项漏洞；完整依赖审计报告开发打包工具链中的 6 个中风险依赖节点，关联 [minimatch 公告 GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)，需在后续打包工具链升级时复核。
+
+## 尚待验证
+
+- **Windows 实机**：已实现 `.exe` / `.lnk` 选择、启动及窗口激活辅助脚本，提供 NSIS 打包配置；尚未在 Windows 运行、打包或验收。
+- macOS Intel、多个显示器、多个桌面空间、应用冷启动较慢时的实际衔接、不同显卡性能尚待实测。
+- 系统原生文件选择器的人工操作尚待确认。自动化只验证选定路径之后的业务流程。
+
+## 发布边界
+
+- 当前提供的 macOS 包仅为本地测试用 ad-hoc 签名，未使用 Developer ID 签名和公证。
+- 目前由 TimeGate 内的入口触发，不拦截原 Dock 或任务栏图标。
+- 无法统一识别第三方应用内部页面是否加载完毕；动画时长可配置，允许 Esc 跳过。
+- 静态图为视觉参考和主题缩略图。当前程序化动效是第一轮实现，光照、材质与转场细节仍需根据体验继续打磨。
+
+## 复现
+
+```sh
+npm ci
+npm run build
+npm test
+npx playwright install ffmpeg
+npm run build:preview
+npm run test:preview
+npm run test:desktop
+```
+
+桌面完整验证需解锁 Mac，并安装 Xcode Command Line Tools。浏览器测试默认使用已安装的 Chrome，可用 `PREVIEW_BROWSER_CHANNEL` 选择兼容的 Playwright channel。
+
+锁屏环境下的部分检查：
+
+```sh
+TIMEGATE_SKIP_FOCUS_ASSERT=1 npm run test:desktop
+```
+
+这条命令的成功退出不代表前台切换通过。原始 JSON 报告保存在交付目录的 `verification/` 中。
