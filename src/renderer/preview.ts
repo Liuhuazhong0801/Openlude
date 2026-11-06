@@ -16,8 +16,7 @@ function selectApplication() {
   const source = option.dataset.icon!;
   image.hidden = true;
   image.src = source;
-  image.alt = `${option.textContent} 图标`;
-  document.querySelector("#demo-app-name")!.textContent = option.textContent;
+  image.alt = `${option.textContent?.trim()} 图标`;
   void image
     .decode()
     .then(() => {

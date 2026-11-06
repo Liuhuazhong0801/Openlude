@@ -12,22 +12,33 @@ interface PlaybackOptions {
 export class LaunchPlayback {
   private frame = 0;
   private resolvePlay?: () => void;
+  private generation = 0;
 
   constructor(private scene: MotionScene | null, private emblem: HTMLElement) {}
 
-  play(settings: Preferences, options: PlaybackOptions = {}): Promise<void> {
+  async play(settings: Preferences, options: PlaybackOptions = {}): Promise<void> {
     this.stop();
-    this.emblem.hidden = !settings.showAppIcon;
+    const generation = this.generation;
+    const icon = this.emblem.querySelector<HTMLImageElement>("img");
+    if (settings.showAppIcon && icon?.getAttribute("src"))
+      await icon.decode().catch(() => {});
+    if (generation !== this.generation) return;
+    const effective = {
+      ...settings,
+      showAppIcon: settings.showAppIcon && !!icon?.naturalWidth,
+    };
+    this.emblem.hidden = !effective.showAppIcon;
     this.emblem.style.transform = "translate(-50%, -50%)";
     const start = performance.now();
-    const total = animationDuration(settings);
+    const total = animationDuration(effective);
     let revealing = false;
     return new Promise((resolve) => {
       this.resolvePlay = resolve;
       const tick = (now: number) => {
         const elapsed = Math.max(0, now - start);
-        const phase = animationFrame(elapsed, settings);
+        const phase = animationFrame(elapsed, effective);
         this.emblem.style.opacity = String(phase.iconOpacity);
+        this.emblem.parentElement?.style.setProperty("--scene-opacity", String(phase.sceneOpacity));
         this.scene?.setOpacity(
           phase.sceneOpacity * (options.nativeWindow ? 1 : phase.coverOpacity),
         );
@@ -51,6 +62,7 @@ export class LaunchPlayback {
   }
 
   stop() {
+    ++this.generation;
     cancelAnimationFrame(this.frame);
     this.frame = 0;
     this.resolvePlay?.();
@@ -63,5 +75,6 @@ export class LaunchPlayback {
     this.emblem.style.opacity = showAppIcon ? "1" : "0";
     this.emblem.style.transform = "translate(-50%, -50%)";
     this.scene?.setOpacity(1);
+    this.emblem.parentElement?.style.setProperty("--scene-opacity", "1");
   }
 }

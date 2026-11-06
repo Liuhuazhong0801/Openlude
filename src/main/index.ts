@@ -13,11 +13,10 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
-import os from "node:os";
 import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { allowedApplication, decodeState, preferences, themeId } from "./model";
-import { applicationIcon, presetIcon } from "./icons";
+import { allowedApplication, decodeState, initialState, preferences, themeId } from "./model";
+import { applicationIcon } from "./icons";
 import { fadeWindowOut } from "./transition";
 import { QUICK_REVEAL_DURATION, revealDuration } from "../shared/transition";
 import type {
@@ -60,98 +59,28 @@ const exists = async (file: string) =>
     () => false,
   );
 
-async function initialState(): Promise<SavedState> {
-  const presets: Target[] = [
-    { id: "codex", name: "Codex", path: null, theme: "portal", builtin: true },
-    {
-      id: "workbuddy",
-      name: "WorkBuddy",
-      path: null,
-      theme: "paper",
-      builtin: true,
-    },
-    {
-      id: "deepseek",
-      name: "DeepSeek",
-      path: null,
-      url: "https://chat.deepseek.com/",
-      theme: "aurora",
-      builtin: true,
-    },
-    {
-      id: "doubao",
-      name: "豆包",
-      path: null,
-      url: "https://www.doubao.com/chat/",
-      theme: "pixel",
-      builtin: true,
-    },
-  ];
-  if (process.platform === "darwin") {
-    const roots = ["/Applications", path.join(os.homedir(), "Applications")];
-    const names = [
-      "Codex.app",
-      "ChatGPT.app",
-      "WorkBuddy.app",
-      "workbuddy.app",
-      "DeepSeek.app",
-      "DeepSeek Harness.app",
-      "豆包.app",
-      "Doubao.app",
-    ];
-    for (const target of presets) {
-      for (const root of roots)
-        for (const name of names) {
-          const key = name.toLowerCase();
-          const match =
-            target.id === "codex"
-              ? /codex|chatgpt/.test(key)
-              : target.id === "doubao"
-                ? /doubao|豆包/.test(key)
-                : key.includes(target.id);
-          if (match && !target.path && (await exists(path.join(root, name)))) {
-            const candidate = path.join(root, name);
-            // Some Codex builds retain the ChatGPT bundle filename.
-            // The ordinary ChatGPT app must not be mistaken for Codex.
-            if (name === "ChatGPT.app") {
-              const identity = await exec(
-                "/usr/libexec/PlistBuddy",
-                [
-                  "-c",
-                  "Print :CFBundleIdentifier",
-                  path.join(candidate, "Contents/Info.plist"),
-                ],
-                { timeout: 2000 },
-              ).catch(() => null);
-              if (identity?.stdout.trim() !== "com.openai.codex") continue;
-            }
-            target.path = candidate;
-          }
-        }
-    }
-  }
-  return {
-    version: 1,
-    targets: presets,
-    preferences: {
-      duration: 1800,
-      showAppIcon: true,
-      reducedMotion:
-        systemPreferences.getAnimationSettings().prefersReducedMotion,
-    },
-  };
-}
-
 async function readState() {
+  let savedVersion: number;
   try {
-    state = decodeState(JSON.parse(await fs.readFile(configFile(), "utf8")));
+    const saved = JSON.parse(await fs.readFile(configFile(), "utf8"));
+    state = decodeState(saved);
+    savedVersion = saved.version;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
       const backup = `${configFile()}.invalid-${Date.now()}`;
       await fs.rename(configFile(), backup).catch(() => {});
       console.warn("Invalid configuration was preserved as a backup.");
     }
-    state = await initialState();
+    state = initialState(systemPreferences.getAnimationSettings().prefersReducedMotion);
+    return;
+  }
+  if (savedVersion !== state.version) {
+    try {
+      await fs.copyFile(configFile(), `${configFile()}.v1-backup-${Date.now()}`);
+      await save();
+    } catch {
+      console.warn("Configuration migration is active but could not be saved.");
+    }
   }
 }
 function save(): Promise<void> {
@@ -168,11 +97,7 @@ function save(): Promise<void> {
 }
 async function hydrate(target: Target): Promise<ViewTarget> {
   const available = target.path ? await exists(target.path) : !!target.url;
-  const icon =
-    (target.path && available
-      ? await applicationIcon(target.path)
-      : undefined) ??
-    (target.builtin ? await presetIcon(target.id) : undefined);
+  const icon = target.path && available ? await applicationIcon(target.path) : undefined;
   return { ...target, available, icon };
 }
 async function viewState(): Promise<AppState> {
@@ -227,7 +152,7 @@ async function startTarget(target: Target): Promise<LaunchResult> {
         !allowedApplication(target.path, process.platform) ||
         !(await exists(target.path))
       )
-        return { ok: false, error: "应用路径已失效，请重新定位。" };
+        return { ok: false, error: "应用路径已失效，请移除后重新添加。" };
       if (process.platform === "darwin")
         await exec("/usr/bin/open", ["-g", target.path], { timeout: 8000 });
       else {
@@ -236,7 +161,7 @@ async function startTarget(target: Target): Promise<LaunchResult> {
       }
     } else if (target.url?.startsWith("https://"))
       await deadline(shell.openExternal(target.url), 8000);
-    else return { ok: false, error: "请先定位本机应用。" };
+    else return { ok: false, error: "请先添加本机应用。" };
     return { ok: true };
   } catch {
     return { ok: false, error: "系统未能打开应用，请检查安装位置后重试。" };
@@ -358,7 +283,7 @@ async function runAnimation(
 ): Promise<LaunchResult> {
   if (busy) return { ok: false, error: "上一次启动仍在进行。" };
   if (!preview && target && !(await hydrate(target)).available)
-    return { ok: false, error: "应用未安装或路径已失效，请重新定位。" };
+    return { ok: false, error: "应用未安装或路径已失效，请移除后重新添加。" };
   if (busy) return { ok: false, error: "上一次启动仍在进行。" };
   busy = true;
   try {
@@ -386,9 +311,9 @@ async function runAnimation(
       movable: false,
       show: false,
       skipTaskbar: true,
-      backgroundColor: ["paper", "ink"].includes(theme)
-        ? "#f2efe7"
-        : "#080e16",
+      transparent: true,
+      backgroundColor: "#00000000",
+      roundedCorners: false,
       alwaysOnTop: true,
       fullscreenable: false,
       hasShadow: false,
@@ -431,12 +356,12 @@ function registerIPC() {
     mainOnly(event);
     return viewState();
   });
-  ipcMain.handle("target:add", async (event, id?: string) => {
+  ipcMain.handle("target:add", async (event) => {
     mainOnly(event);
     if (busy) throw new Error("请等待启动完成");
-    const existing = id ? findTarget(id) : null;
+    if (state.targets.length >= 200) throw new Error("最多可添加 200 个应用。");
     const selection = await dialog.showOpenDialog(main!, {
-      title: existing ? `定位 ${existing.name}` : "添加本机应用",
+      title: "添加本机应用",
       defaultPath: process.platform === "darwin" ? "/Applications" : undefined,
       properties: ["openFile"],
       filters: [
@@ -453,25 +378,22 @@ function registerIPC() {
     const ownExe = app.getPath("exe");
     if (file === ownExe || ownExe.startsWith(file + path.sep))
       throw new Error("请选择要添加启动动画的其他应用。");
-    const duplicate = state.targets.find((t) => t.path === file && t.id !== id);
+    const duplicate = state.targets.find((t) => t.path === file);
     if (duplicate) throw new Error(`已添加 ${duplicate.name}`);
-    if (existing) existing.path = file;
-    else
-      state.targets.push({
-        id: randomUUID(),
-        name: path.basename(file, path.extname(file)),
-        path: file,
-        theme: "portal",
-      });
+    state.targets.push({
+      id: randomUUID(),
+      name: path.basename(file, path.extname(file)),
+      path: file,
+      theme: "portal",
+    });
     await save();
     return viewState();
   });
   ipcMain.handle("target:remove", async (event, id: string) => {
     mainOnly(event);
     if (busy) throw new Error("请等待启动完成");
-    const target = findTarget(id);
-    if (target.builtin) target.path = null;
-    else state.targets = state.targets.filter((t) => t.id !== id);
+    findTarget(id);
+    state.targets = state.targets.filter((t) => t.id !== id);
     await save();
     return viewState();
   });

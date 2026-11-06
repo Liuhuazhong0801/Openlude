@@ -7,30 +7,6 @@ import path from "node:path";
 const exec = promisify(execFile);
 const cache = new Map<string, Promise<string | undefined>>();
 const iconSize = 256;
-const presetFiles: Record<string, string> = {
-  codex: "codex.png",
-  workbuddy: "workbuddy.svg",
-  deepseek: "deepseek.png",
-  doubao: "doubao.png",
-};
-
-export async function presetIcon(id: string): Promise<string | undefined> {
-  const filename = Object.hasOwn(presetFiles, id) ? presetFiles[id] : undefined;
-  if (!filename) return undefined;
-  const file = path.join(
-    __dirname,
-    "../../dist-renderer/assets/apps",
-    filename,
-  );
-  if (filename.endsWith(".svg")) {
-    const bytes = await fs.readFile(file).catch(() => null);
-    return bytes
-      ? `data:image/svg+xml;base64,${bytes.toString("base64")}`
-      : undefined;
-  }
-  return pngIcon(file);
-}
-
 async function pngIcon(file: string): Promise<string | undefined> {
   try {
     const image = nativeImage.createFromPath(file);

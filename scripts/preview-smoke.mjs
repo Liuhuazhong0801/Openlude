@@ -44,7 +44,8 @@ try {
   ]) {
     await page.locator("#demo-app").selectOption(id);
     await page.waitForSelector("#demo-app-icon:not([hidden])");
-    assert.equal(await page.locator("#demo-app-name").innerText(), name);
+    assert.equal(await page.locator("#demo-app-icon").getAttribute("alt"), `${name} 图标`);
+    assert.equal(await page.locator("#demo-app-name").count(), 0);
     const source = await page.locator("#demo-app-icon").getAttribute("src");
     assert.ok(source.startsWith("data:image/"));
     sources.add(source);
@@ -55,7 +56,7 @@ try {
     false,
   );
   report.checks.push(
-    "Four target icons and names are embedded and switch correctly; no launcher identity in the scene",
+    "Four demo icons switch correctly; no app name or launcher identity in the scene",
   );
   await page.locator("#demo-app").selectOption("codex");
   const box = await page.locator("#demo-stage").boundingBox();
@@ -92,6 +93,8 @@ try {
   await page.waitForTimeout(250);
   assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "1");
   assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "0");
+  assert.equal(await page.locator("#demo-stage").evaluate((el) => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)");
+  assert.equal((await page.locator(".app-emblem").textContent()).trim(), "");
   await page.waitForTimeout(650);
   assert.equal(await page.locator(".app-emblem").evaluate((el) => getComputedStyle(el).opacity), "0");
   assert.equal(await page.locator("canvas").evaluate((el) => getComputedStyle(el).opacity), "1");

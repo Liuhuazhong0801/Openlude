@@ -65,7 +65,7 @@ export interface Preferences {
   showAppIcon: boolean;
 }
 export interface SavedState {
-  version: 1;
+  version: 2;
   targets: Target[];
   preferences: Preferences;
 }
@@ -91,7 +91,7 @@ export interface LaunchResult {
 }
 export interface DesktopAPI {
   state(): Promise<AppState>;
-  add(targetId?: string): Promise<AppState | null>;
+  add(): Promise<AppState | null>;
   remove(id: string): Promise<AppState>;
   bind(
     id: string,

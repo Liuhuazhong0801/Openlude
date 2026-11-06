@@ -10,6 +10,13 @@ export function themeId(value: unknown): ThemeId {
   if (!THEMES.some((t) => t.id === value)) throw new Error("未知动画主题");
   return value as ThemeId;
 }
+export function initialState(reducedMotion: boolean): SavedState {
+  return {
+    version: 2,
+    targets: [],
+    preferences: { duration: 1800, reducedMotion, showAppIcon: true },
+  };
+}
 export function preferences(value: unknown): Preferences {
   const p = value as Partial<Preferences> | null;
   if (
@@ -38,10 +45,10 @@ export function allowedApplication(file: string, platform: string): boolean {
     : platform === "win32" && [".exe", ".lnk"].includes(ext);
 }
 export function decodeState(input: unknown): SavedState {
-  const s = input as SavedState | null;
+  const s = input as (Omit<SavedState, "version"> & { version: number }) | null;
   if (
     !s ||
-    s.version !== 1 ||
+    (s.version !== 1 && s.version !== 2) ||
     !Array.isArray(s.targets) ||
     s.targets.length > 200
   )
@@ -65,12 +72,19 @@ export function decodeState(input: unknown): SavedState {
       name: t.name.slice(0, 100),
       path: t.path,
       theme: themeId(t.theme),
-      builtin: !!t.builtin,
+      ...(t.builtin ? { builtin: true } : {}),
       ...(t.url ? { url: t.url } : {}),
       ...(t.preferences !== undefined
         ? { preferences: preferences(t.preferences) }
         : {}),
     };
   });
-  return { version: 1, targets, preferences: preferences(s.preferences) };
+  return {
+    version: 2,
+    // Keep bound local apps and user-added targets. Retire unbound starter entries.
+    targets: targets
+      .filter((t) => s.version !== 1 || !t.builtin || !!t.path)
+      .map(({ builtin: _builtin, ...target }) => target),
+    preferences: preferences(s.preferences),
+  };
 }

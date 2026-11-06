@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { allowedApplication, decodeState, preferences, themeId } from "./model";
+import { allowedApplication, decodeState, initialState, preferences, themeId } from "./model";
 import { animationDuration, animationFrame } from "../shared/transition";
 test("platform paths support spaces and Unicode, reject executable substitutions", () => {
   assert.equal(allowedApplication("/Applications/豆包.app", "darwin"), true);
@@ -100,4 +100,29 @@ test("identity precedes motion and motion continues during the reveal", () => {
   assert.equal(withoutIcon.iconOpacity, 0);
   assert.ok(withoutIcon.sceneOpacity > 0);
   assert.equal(animationDuration({ ...settings, reducedMotion: true }), 650);
+});
+test("fresh installs start with no preselected applications", () => {
+  const state = initialState(false);
+  assert.equal(state.version, 2);
+  assert.deepEqual(state.targets, []);
+  assert.equal(state.preferences.showAppIcon, true);
+});
+test("legacy starter entries are retired while local bindings and custom apps survive", () => {
+  const local = { id: "codex", name: "Codex", path: "/Applications/Codex.app", theme: "portal", builtin: true,
+    preferences: { duration: 3000, reducedMotion: false, showAppIcon: false } };
+  const custom = { id: "custom", name: "My App", path: "/Applications/My App.app", theme: "paper" };
+  const migrated = decodeState({
+    version: 1,
+    preferences: { duration: 1800, reducedMotion: false },
+    targets: [local, custom,
+      { id: "workbuddy", name: "WorkBuddy", path: null, theme: "paper", builtin: true },
+      { id: "doubao", name: "豆包", path: null, url: "https://www.doubao.com/chat/", theme: "pixel", builtin: true },
+    ],
+  });
+  assert.equal(migrated.version, 2);
+  assert.deepEqual(migrated.targets.map(t => t.id), ["codex", "custom"]);
+  assert.equal(migrated.targets[0].builtin, undefined);
+  assert.deepEqual(migrated.targets[0].preferences, local.preferences);
+  assert.deepEqual(decodeState(migrated), migrated);
+  assert.throws(() => decodeState({ ...migrated, version: 3 }));
 });

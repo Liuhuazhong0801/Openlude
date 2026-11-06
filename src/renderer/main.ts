@@ -14,12 +14,9 @@ const paths: Record<string, string> = {
   plus: "M12 5v14M5 12h14",
   search: "M21 21l-5-5M18 10a8 8 0 11-16 0 8 8 0 0116 0",
   expand: "M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5",
-  folder: "M3 7V5h7l2 2h9v13H3z",
   check: "M5 12l4 4L19 6",
   info: "M12 11v6M12 7h.01M22 12a10 10 0 11-20 0 10 10 0 0120 0",
-  arrow: "M7 17L17 7M7 7h10v10",
   close: "M6 6l12 12M6 18L18 6",
-  trash: "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14",
 };
 const icon = (name: string, size = 16) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
@@ -45,33 +42,34 @@ $("#app").innerHTML = `
     <div class="sidebar-bottom"><button class="text-button" id="nav-help">${icon("info")}使用说明</button><span class="version" id="version">TimeGate</span></div>
   </aside>
   <main class="content">
-    <header class="target-header">
+    <section class="empty-workspace" id="empty-workspace" hidden><h1>添加你的第一个应用</h1><p>选择本机应用，为它设置启动动画。</p><button class="button primary" id="add-first-app">添加应用</button></section>
+    <header class="target-header" id="target-header">
       <img id="target-icon" alt="" hidden>
       <div class="target-title"><h1 id="target-name">选择应用</h1><p id="target-status">为应用设置启动动画</p></div>
-      <div class="target-actions"><button class="icon-button" id="locate-target" aria-label="定位应用" title="定位本机应用">${icon("folder", 18)}</button><button class="icon-button" id="remove-target" aria-label="移除应用" title="移除应用" hidden>${icon("trash", 18)}</button><button class="button" id="launch-target" disabled>${icon("arrow")}启动应用</button></div>
+      <div class="target-actions"><button class="button" id="launch-target" disabled>启动应用</button></div>
     </header>
-    <section class="themes" aria-labelledby="themes-title">
+    <section class="themes" id="theme-section" aria-labelledby="themes-title">
       <h2 id="themes-title">动画主题</h2>
       <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art"><img src="./assets/themes/${t.id}.png" alt=""><span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
     </section>
-    <section class="preview-section" aria-labelledby="preview-title">
+    <section class="preview-section" id="preview-section" aria-labelledby="preview-title">
       <div class="section-heading"><h2 id="preview-title">预览</h2><span id="theme-name"></span></div>
-      <div class="stage" id="preview-stage"><div class="app-emblem"><img id="preview-icon" alt="" hidden><div id="preview-name"></div></div></div>
+      <div class="stage" id="preview-stage"><div class="app-emblem"><img id="preview-icon" alt="" hidden></div></div>
       <div class="playback-bar"><button class="button" id="play">${icon("play")}播放</button><div class="playback-track" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="preview-progress"></i></div><span id="time-label">1.8 秒</span><button class="button" id="fullscreen" aria-label="全屏预览">${icon("expand")}全屏</button></div>
     </section>
-    <footer><span>通过此处启动应用时播放动画</span><span><kbd>Esc</kbd> 跳过全屏动画</span></footer>
+    <footer id="workspace-footer"><span>通过此处启动应用时播放动画</span><span><kbd>Esc</kbd> 跳过全屏动画</span></footer>
   </main>
   <aside class="inspector" id="settings" aria-labelledby="settings-title">
     <h2 id="settings-title">动画设置</h2>
     <div class="setting-block"><div class="field-heading"><label for="duration">时长</label><div class="number-field"><input id="duration-value" aria-label="动画时长（秒）" type="number" min="0.6" max="3" step="0.1" value="1.8"><span>秒</span></div></div><input id="duration" type="range" min="600" max="3000" step="100" value="1800"><div class="range-limits"><span>0.6 秒</span><span>3.0 秒</span></div></div>
-    <label class="toggle-line"><span>显示应用图标<small>先显示图标和名称，再进入动画</small></span><input type="checkbox" id="show-app-icon" checked><span class="switch" aria-hidden="true"></span></label>
+    <label class="toggle-line"><span>显示应用图标<small>在透明背景上显示图标，再进入动画</small></span><input type="checkbox" id="show-app-icon" checked><span class="switch" aria-hidden="true"></span></label>
     <label class="toggle-line"><span>柔和模式<small>减少位移，缩短过渡时间</small></span><input type="checkbox" id="reduced-motion"><span class="switch" aria-hidden="true"></span></label>
-    <div class="binding-section"><h2>应用于</h2><div class="binding-target"><img id="binding-icon" alt="" hidden><strong id="binding-name"></strong></div><p id="binding-hint"></p></div>
+    <div class="binding-section"><h2>应用于</h2><div class="binding-target"><img id="binding-icon" alt="" hidden><strong id="binding-name"></strong></div><p id="binding-hint"></p><button class="text-button remove-target" id="remove-target">移除此应用</button></div>
     <div class="inspector-bottom"><p id="save-status" aria-live="polite"></p><button class="button primary" id="apply" disabled>保存绑定</button></div>
   </aside>
 </div>
 <div class="toast" role="status" aria-live="polite" id="toast"></div>
-<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><h2>使用启动动画</h2><ol><li>从左侧选择应用，或添加本机的应用文件。</li><li>选择主题，调整时长和柔和模式，点击“保存绑定”。</li><li>点击“启动应用”，播放已保存的动画并打开应用。</li></ol><p>播放和全屏只预览当前设置。切换应用会保留本次未保存的修改，关闭工作台则放弃这些修改。</p><p>原来的 Dock、任务栏图标仍按系统原有方式启动。DeepSeek、豆包在未定位客户端时可打开网页版。</p><button class="button" id="help-done">知道了</button></dialog>`;
+<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><h2>使用启动动画</h2><ol><li>点击“添加应用”，选择本机安装的应用。</li><li>选择主题，调整时长、图标开场和柔和模式，点击“保存绑定”。</li><li>点击“启动应用”，播放已保存的动画并打开应用。</li></ol><p>播放和全屏只预览当前设置。切换应用会保留本次未保存的修改，关闭工作台则放弃这些修改。</p><p>原来的 Dock、任务栏图标仍按系统原有方式启动。应用移动后，可先从列表移除，再重新添加。</p><button class="button" id="help-done">知道了</button></dialog>`;
 
 interface Draft extends Preferences {
   theme: ThemeId;
@@ -181,9 +179,9 @@ function updateControls() {
   playButton.disabled = !t || !scene || busy || localPlaying;
   $<HTMLButtonElement>("#fullscreen").disabled = !t || busy;
   $<HTMLButtonElement>("#launch-target").disabled = !t?.available || busy;
-  $<HTMLButtonElement>("#locate-target").disabled = !t || busy;
   $<HTMLButtonElement>("#remove-target").disabled = busy;
   $<HTMLButtonElement>("#add-app").disabled = busy;
+  $<HTMLButtonElement>("#add-first-app").disabled = busy;
   $("#save-status").textContent = !t
     ? "请选择应用"
     : saving
@@ -200,15 +198,7 @@ function updateControls() {
   for (const element of document.querySelectorAll<HTMLButtonElement>(
     ".theme-card, .app-identity",
   ))
-    element.disabled = busy;
-  for (const element of document.querySelectorAll<HTMLButtonElement>(
-    ".launch-button",
-  )) {
-    const rowTarget = state.targets.find(
-      (x) => x.id === element.closest<HTMLElement>("[data-id]")?.dataset.id,
-    );
-    element.disabled = !rowTarget?.available || busy;
-  }
+    element.disabled = !t || busy;
 }
 function renderTargets() {
   $("#app-count").textContent = String(state.targets.length);
@@ -221,33 +211,37 @@ function renderTargets() {
   $("#application-list").innerHTML = matches
     .map((t) => {
       const theme = THEMES.find((th) => th.id === t.theme)!;
-      return `<article class="app-card ${t.id === selectedTarget ? "active" : ""}" data-id="${escape(t.id)}"><button class="app-identity" data-action="select" aria-label="选择 ${escape(t.name)}" aria-pressed="${t.id === selectedTarget}">${t.icon ? `<img class="app-icon" src="${escape(t.icon)}" alt="">` : `<span class="app-monogram">${escape(t.name.slice(0, 1))}</span>`}<span class="app-copy"><strong>${escape(t.name)}</strong><small>${t.available ? theme.name : status(t)}${t.url && !t.path ? " · 网页" : ""}</small></span>${changed(t) ? '<span class="unsaved" title="未保存" aria-label="有未保存的修改"></span>' : ""}</button><button class="icon-button launch-button" data-action="launch" ${!t.available ? "disabled" : ""} aria-label="启动 ${escape(t.name)}" title="使用已保存的设置启动">${icon("arrow", 15)}</button></article>`;
+      return `<article class="app-card ${t.id === selectedTarget ? "active" : ""}" data-id="${escape(t.id)}"><button class="app-identity" data-action="select" aria-label="选择 ${escape(t.name)}" aria-pressed="${t.id === selectedTarget}">${t.icon ? `<img class="app-icon" src="${escape(t.icon)}" alt="">` : `<span class="app-monogram">${escape(t.name.slice(0, 1))}</span>`}<span class="app-copy"><strong>${escape(t.name)}</strong><small>${t.available ? theme.name : status(t)}${t.url && !t.path ? " · 网页" : ""}</small></span>${changed(t) ? '<span class="unsaved" title="未保存" aria-label="有未保存的修改"></span>' : ""}</button></article>`;
     })
     .join("");
   $("#empty-search").hidden = matches.length > 0;
+  $("#empty-search").textContent = state.targets.length ? "没有匹配的应用" : "暂无应用";
   updateControls();
 }
 function updateSelection() {
   const t = target();
   const d = draft();
   const theme = THEMES.find((item) => item.id === d.theme)!;
+  $(".workspace").classList.toggle("empty", !t);
+  $("#empty-workspace").hidden = !!t;
+  for (const selector of ["#target-header", "#theme-section", "#preview-section", "#workspace-footer", "#settings"])
+    $(selector).hidden = !t;
   for (const [image, label] of [
     ["#target-icon", "#target-name"],
-    ["#preview-icon", "#preview-name"],
     ["#binding-icon", "#binding-name"],
   ]) {
     setImage(image, t?.icon, t?.name);
     $(label).textContent = t?.name ?? "选择应用";
   }
+  setImage("#preview-icon", t?.icon, t?.name);
   $("#target-status").textContent = t
     ? `${status(t)} · 启动动画`
     : "添加应用后设置启动动画";
-  $("#remove-target").hidden = !t || !!t.builtin;
+  $("#remove-target").hidden = !t;
   $("#theme-name").textContent = theme.name;
   $("#binding-hint").textContent = t
     ? `当前绑定：${THEMES.find((item) => item.id === t.theme)!.name}`
     : "";
-  $("#binding-hint").title = t?.path || t?.url || "尚未定位应用";
   for (const card of document.querySelectorAll<HTMLButtonElement>(
     ".theme-card",
   )) {
@@ -283,12 +277,12 @@ async function nativeAction(
     updateControls();
   }
 }
-async function addApplication(id?: string) {
-  const next = await window.timegate.add(id);
+async function addApplication() {
+  const next = await window.timegate.add();
   if (!next) return;
   state = next;
-  selectTarget(id || next.targets.at(-1)!.id);
-  toast(id ? "已更新应用位置" : "应用已添加");
+  selectTarget(next.targets.at(-1)!.id);
+  toast("应用已添加");
 }
 $(".theme-grid").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
@@ -306,14 +300,12 @@ $("#application-list").addEventListener("click", (event) => {
   const id = button?.closest<HTMLElement>("[data-id]")?.dataset.id;
   if (!button || !id || nativeBusy || saving) return;
   if (button.dataset.action === "select") selectTarget(id);
-  if (button.dataset.action === "launch")
-    void guard(() => nativeAction(() => window.timegate.launch(id)));
 });
 $("#add-app").addEventListener("click", () => {
   void guard(() => addApplication());
 });
-$("#locate-target").addEventListener("click", () => {
-  void guard(() => addApplication(selectedTarget));
+$("#add-first-app").addEventListener("click", () => {
+  void guard(() => addApplication());
 });
 $("#remove-target").addEventListener("click", () => {
   void guard(async () => {

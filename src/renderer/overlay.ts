@@ -14,7 +14,6 @@ if (payload) {
     // Start the native reveal before playback ends; keep drawing throughout it.
     window.timegate.overlayFinish(payload.operationId);
   };
-  document.querySelector("#launch-name")!.textContent = payload.name;
   const image = document.querySelector<HTMLImageElement>("#launch-icon")!;
   image.alt = payload.name ? `${payload.name} 图标` : "";
   if (payload.showAppIcon && payload.icon) {

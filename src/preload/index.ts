@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopAPI } from "../shared/types";
 const api: DesktopAPI = {
   state: () => ipcRenderer.invoke("state"),
-  add: (id) => ipcRenderer.invoke("target:add", id),
+  add: () => ipcRenderer.invoke("target:add"),
   remove: (id) => ipcRenderer.invoke("target:remove", id),
   bind: (id, theme, preferences) =>
     ipcRenderer.invoke("target:bind", id, theme, preferences),
