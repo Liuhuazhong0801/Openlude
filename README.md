@@ -105,3 +105,9 @@ scripts/        桌面端验证脚本
 - 没有后台账户、云端服务或模型 API 调用。
 
 请结合 [验证记录](VERIFICATION.md) 查看实际通过的平台与结果；构建配置不等于双端实机验收。后续修改遵循 [开发流程](CONTRIBUTING.md)，使用分支和 Pull Request。
+
+## 开源许可
+
+TimeGate 的原创源代码与项目文档使用 [MIT License](LICENSE)。第三方应用图标、名称、商标及依赖的权利另见 [第三方声明](THIRD_PARTY_NOTICES.md)。
+
+欢迎通过 [Issues](https://github.com/Liuhuazhong0801/TimeGate/issues) 反馈问题，或按照 [贡献流程](CONTRIBUTING.md) 提交 Pull Request。

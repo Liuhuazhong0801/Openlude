@@ -78,5 +78,6 @@
   "homepage": "https://github.com/Liuhuazhong0801/TimeGate#readme",
   "bugs": {
     "url": "https://github.com/Liuhuazhong0801/TimeGate/issues"
-  }
+  },
+  "license": "MIT"
 }
