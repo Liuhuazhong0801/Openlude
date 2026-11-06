@@ -86,10 +86,9 @@ export class MotionScene {
     uInk: { value: 0 },
     uAspect: { value: 1 },
   };
-  private rings: THREE.Mesh[] = [];
+  private rings: THREE.LineLoop[] = [];
   private papers: THREE.Mesh[] = [];
   private cubes?: THREE.InstancedMesh;
-  private stars?: THREE.Points;
   private resolvePlay?: () => void;
   constructor(private host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
@@ -132,7 +131,6 @@ export class MotionScene {
     this.rings = [];
     this.papers = [];
     this.cubes = undefined;
-    this.stars = undefined;
   }
   setTheme(theme: ThemeId) {
     this.stop();
@@ -144,7 +142,11 @@ export class MotionScene {
       theme === "paper" || theme === "ink",
     );
     this.scene.background = new THREE.Color(
-      theme === "paper" || theme === "ink" ? "#f2efe7" : "#080e16",
+      theme === "paper" || theme === "ink"
+        ? "#f2efe7"
+        : theme === "portal"
+          ? "#15191e"
+          : "#080e16",
     );
     this.scene.fog = null;
     this.camera.position.set(0, 0, 10);
@@ -178,48 +180,20 @@ export class MotionScene {
     this.render(0.43);
   }
   private buildPortal() {
-    this.scene.fog = new THREE.FogExp2("#080e16", 0.034);
-    const shape = rounded(11.8, 7.3, 0.68);
-    shape.holes.push(rounded(11.67, 7.17, 0.62));
-    const geometry = new THREE.ExtrudeGeometry(shape, {
-      depth: 0.06,
-      bevelEnabled: true,
-      bevelSegments: 2,
-      steps: 1,
-      bevelSize: 0.024,
-      bevelThickness: 0.024,
-      curveSegments: 16,
-    });
-    for (let i = 0; i < 19; i++) {
-      const material = new THREE.MeshStandardMaterial({
-        color: i % 4 === 0 ? "#8bbfb8" : "#dce5e7",
-        metalness: 0.7,
-        roughness: 0.27,
-        emissive: "#396b69",
-        emissiveIntensity: 0.13,
+    const points = rounded(2, 2, 0.12).getPoints(96);
+    for (let i = 0; i < 3; i++) {
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({
+        color: "#c0c5ce",
+        transparent: true,
+        opacity: 0.22 - i * 0.05,
+        toneMapped: false,
+        depthWrite: false,
       });
-      const ring = new THREE.Mesh(geometry, material);
+      const ring = new THREE.LineLoop(geometry, material);
       this.rings.push(ring);
       this.scene.add(ring);
     }
-    const positions = new Float32Array(240 * 3);
-    for (let i = 0; i < 240; i++) {
-      positions[i * 3] = (rand(i + 1) - 0.5) * 50;
-      positions[i * 3 + 1] = (rand(i + 401) - 0.5) * 30;
-      positions[i * 3 + 2] = -rand(i + 901) * 65;
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    this.stars = new THREE.Points(
-      geo,
-      new THREE.PointsMaterial({
-        size: 0.035,
-        color: "#9bbdbb",
-        transparent: true,
-        opacity: 0.5,
-      }),
-    );
-    this.scene.add(this.stars);
   }
   private buildPaper() {
     const colors = [
@@ -265,12 +239,16 @@ export class MotionScene {
     this.uniforms.uProgress.value = progress;
     const p = progress;
     if (this.theme === "portal") {
-      const travel = (p * p * 0.55 + p * 0.45) * 25;
+      const height =
+        2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * 10;
       this.rings.forEach((ring, i) => {
-        ring.position.z = ((i * 4.2 + travel) % 79.8) - 72;
-        ring.rotation.z = Math.sin(p * 2.3) * 0.018;
+        const size = 0.46 + i * 0.17 + ease(p) * 0.075;
+        ring.scale.set(
+          (height * this.camera.aspect * size) / 2,
+          (height * size) / 2,
+          1,
+        );
       });
-      if (this.stars) this.stars.position.z = travel * 0.45;
     }
     if (this.theme === "paper")
       this.papers.forEach((paper, i) => {
@@ -370,16 +348,14 @@ export class MotionScene {
   }
 }
 
-export function animateBrand(
+export function animateEmblem(
   element: HTMLElement,
   p: number,
   reduced: boolean,
 ) {
-  element.style.opacity = String(
-    smooth(0.12, 0.42, p) * (1 - smooth(0.91, 1, p)),
-  );
+  element.style.opacity = String(smooth(0, 0.15, p) * (1 - smooth(0.8, 1, p)));
   element.style.transform = reduced
     ? "translate(-50%, -50%)"
-    : `translate(-50%, -50%) translateY(${(1 - ease(p / 0.6)) * 22}px) scale(${0.86 + ease(p / 0.65) * 0.14})`;
-  element.style.filter = `blur(${reduced ? 0 : (1 - smooth(0.1, 0.42, p)) * 6}px)`;
+    : `translate(-50%, -50%) translateY(${(1 - ease(p / 0.4)) * 4}px) scale(${0.98 + ease(p / 0.4) * 0.02})`;
+  element.style.filter = "none";
 }

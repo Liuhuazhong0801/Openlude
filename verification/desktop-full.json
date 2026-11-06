@@ -1,9 +1,18 @@
 {
   "platform": "darwin",
-  "run": "test-results/run-1793939494938",
+  "run": "test-results/run-1793944010003",
   "checks": [
     {
       "name": "Desktop boots with five themes and four presets"
+    },
+    {
+      "name": "All presets have app icons; default scene uses the actual target identity only"
+    },
+    {
+      "name": "Minimum window size keeps playback and save controls visible"
+    },
+    {
+      "name": "Switching apps updates identity and preserves unsaved drafts without persisting"
     },
     {
       "name": "Procedural motion changes pixels outside the logo: portal"
@@ -21,21 +30,30 @@
       "name": "Procedural motion changes pixels outside the logo: ink"
     },
     {
+      "name": "Full-screen preview uses the target icon and unsaved duration, with no launcher tagline"
+    },
+    {
       "name": "Escape removes the full-screen overlay"
     },
     {
       "name": "Native file selection and theme binding persist"
     },
     {
+      "name": "Actual launch uses the custom app's bundle icon and name"
+    },
+    {
       "name": "Real macOS app starts; duplicate launch is rejected; overlay is removed",
-      "detail": "2948ms"
+      "detail": "2824ms"
     },
     {
       "name": "Foreground focus reaches the real target application",
-      "detail": "target PID 94046; foreground PID 94046"
+      "detail": "target PID 99658; foreground PID 99658"
     },
     {
       "name": "Missing application path fails without leaving an overlay"
+    },
+    {
+      "name": "Unavailable icon falls back to the target name, never the launcher logo"
     },
     {
       "name": "Preferences and theme bindings survive restart"

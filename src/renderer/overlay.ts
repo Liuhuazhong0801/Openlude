@@ -1,7 +1,7 @@
 import "./style.css";
-import { MotionScene, animateBrand } from "./motion";
+import { MotionScene, animateEmblem } from "./motion";
 const host = document.querySelector<HTMLElement>("#overlay-stage")!;
-const brand = host.querySelector<HTMLElement>(".brand-center")!;
+const emblem = host.querySelector<HTMLElement>(".app-emblem")!;
 let scene: MotionScene | null = null;
 let completed = false;
 const payload = await window.timegate.overlayPayload();
@@ -13,12 +13,17 @@ if (payload) {
     window.timegate.overlayFinish(payload.operationId);
   };
   document.querySelector("#launch-name")!.textContent = payload.name;
-  document.querySelector("#launch-label")!.textContent = payload.preview
-    ? "每一次开始，都有一点不同"
-    : "正在为你打开";
   const image = document.querySelector<HTMLImageElement>("#launch-icon")!;
-  image.src = payload.icon || "./assets/branding/app-icon.png";
-  await image.decode().catch(() => {});
+  image.alt = payload.name ? `${payload.name} 图标` : "";
+  if (payload.icon) {
+    image.src = payload.icon;
+    await image
+      .decode()
+      .then(() => {
+        image.hidden = false;
+      })
+      .catch(() => {});
+  }
   try {
     scene = new MotionScene(host);
     scene.setTheme(payload.theme);
@@ -26,17 +31,17 @@ if (payload) {
   } catch {
     host.classList.add("fallback-stage");
   }
-  animateBrand(brand, 0, payload.reducedMotion);
+  animateEmblem(emblem, 0, payload.reducedMotion);
   window.timegate.onAnimate(() => {
     if (scene)
       void scene
         .play(payload.duration, payload.reducedMotion, (p) =>
-          animateBrand(brand, p, payload.reducedMotion),
+          animateEmblem(emblem, p, payload.reducedMotion),
         )
         .then(finish);
     else {
-      brand.style.opacity = "1";
-      brand.animate([{ opacity: 0 }, { opacity: 1 }], {
+      emblem.style.opacity = "1";
+      emblem.animate([{ opacity: 0 }, { opacity: 1 }], {
         duration: 350,
         fill: "forwards",
       });

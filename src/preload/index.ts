@@ -4,10 +4,12 @@ const api: DesktopAPI = {
   state: () => ipcRenderer.invoke("state"),
   add: (id) => ipcRenderer.invoke("target:add", id),
   remove: (id) => ipcRenderer.invoke("target:remove", id),
-  bind: (id, theme) => ipcRenderer.invoke("target:bind", id, theme),
+  bind: (id, theme, preferences) =>
+    ipcRenderer.invoke("target:bind", id, theme, preferences),
   preferences: (value) => ipcRenderer.invoke("preferences", value),
   launch: (id) => ipcRenderer.invoke("launch", id),
-  preview: (theme, id) => ipcRenderer.invoke("preview", theme, id),
+  preview: (theme, id, preferences) =>
+    ipcRenderer.invoke("preview", theme, id, preferences),
   overlayPayload: () => ipcRenderer.invoke("overlay:payload"),
   overlayReady: (id) => ipcRenderer.send("overlay:ready", id),
   overlayFinish: (id) => ipcRenderer.send("overlay:finish", id),

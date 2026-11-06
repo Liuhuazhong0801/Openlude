@@ -3,8 +3,8 @@ export const THEMES = [
     id: "portal",
     name: "光环穿梭",
     en: "PORTAL",
-    description: "越过层层光环，进入新的工作空间。",
-    motion: "三维景深 · 镜头穿梭",
+    description: "银灰轮廓缓缓展开，显现应用。",
+    motion: "轮廓展开 · 轻缓景深",
     light: false,
     accent: "#8cd8d0",
   },
@@ -12,7 +12,7 @@ export const THEMES = [
     id: "aurora",
     name: "极光流体",
     en: "AURORA",
-    description: "流动的光带，轻轻点亮每一次开始。",
+    description: "柔和光带在应用图标后流动。",
     motion: "程序化光带 · 流动显现",
     light: false,
     accent: "#80ddcd",
@@ -21,7 +21,7 @@ export const THEMES = [
     id: "paper",
     name: "几何折叠",
     en: "FOLD",
-    description: "像展开一张纸，让灵感有处安放。",
+    description: "纸片翻折并向外展开。",
     motion: "三维纸片 · 翻折展开",
     light: true,
     accent: "#6f83de",
@@ -30,7 +30,7 @@ export const THEMES = [
     id: "pixel",
     name: "像素聚合",
     en: "PIXEL",
-    description: "让散落的方块，汇成一个新的起点。",
+    description: "方块聚合成应用周围的轮廓。",
     motion: "三维方块 · 聚合成形",
     light: false,
     accent: "#ffb86a",
@@ -39,7 +39,7 @@ export const THEMES = [
     id: "ink",
     name: "水墨晕染",
     en: "INK",
-    description: "墨色缓缓散开，为专注留一点空白。",
+    description: "墨迹向两侧晕开，留出中央区域。",
     motion: "噪声遮罩 · 墨迹扩散",
     light: true,
     accent: "#9b9d91",
@@ -53,6 +53,7 @@ export interface Target {
   url?: string;
   theme: ThemeId;
   builtin?: boolean;
+  preferences?: Preferences;
 }
 export interface ViewTarget extends Target {
   available: boolean;
@@ -90,10 +91,18 @@ export interface DesktopAPI {
   state(): Promise<AppState>;
   add(targetId?: string): Promise<AppState | null>;
   remove(id: string): Promise<AppState>;
-  bind(id: string, theme: ThemeId): Promise<AppState>;
+  bind(
+    id: string,
+    theme: ThemeId,
+    preferences?: Preferences,
+  ): Promise<AppState>;
   preferences(value: Preferences): Promise<AppState>;
   launch(id: string): Promise<LaunchResult>;
-  preview(theme: ThemeId, targetId?: string): Promise<LaunchResult>;
+  preview(
+    theme: ThemeId,
+    targetId?: string,
+    preferences?: Preferences,
+  ): Promise<LaunchResult>;
   overlayPayload(): Promise<AnimationPayload | null>;
   overlayReady(operationId: string): void;
   overlayFinish(operationId: string): void;

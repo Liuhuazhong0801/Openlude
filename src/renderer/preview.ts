@@ -1,12 +1,29 @@
 import "./preview.css";
-import { MotionScene, animateBrand } from "./motion";
+import { MotionScene, animateEmblem } from "./motion";
 import { THEMES, type ThemeId } from "../shared/types";
 
 const stage = document.querySelector<HTMLElement>("#demo-stage")!;
-const brand = document.querySelector<HTMLElement>(".brand-center")!;
+const emblem = document.querySelector<HTMLElement>(".app-emblem")!;
 const picker = document.querySelector<HTMLElement>("#theme-picker")!;
 const loop = document.querySelector<HTMLInputElement>("#demo-loop")!;
 const progress = document.querySelector<HTMLElement>("#demo-progress")!;
+const appPicker = document.querySelector<HTMLSelectElement>("#demo-app")!;
+function selectApplication() {
+  const option = appPicker.selectedOptions[0];
+  const image = document.querySelector<HTMLImageElement>("#demo-app-icon")!;
+  const source = option.dataset.icon!;
+  image.hidden = true;
+  image.src = source;
+  image.alt = `${option.textContent} 图标`;
+  document.querySelector("#demo-app-name")!.textContent = option.textContent;
+  void image
+    .decode()
+    .then(() => {
+      if (image.getAttribute("src") === source) image.hidden = false;
+    })
+    .catch(() => {});
+}
+selectApplication();
 picker.innerHTML = THEMES.map(
   (t) =>
     `<button data-theme="${t.id}" aria-pressed="${t.id === "portal"}"><span>${t.name}</span><small>${t.en}</small></button>`,
@@ -19,7 +36,7 @@ function play() {
   const token = ++generation;
   void scene
     .play(2600, false, (p) => {
-      animateBrand(brand, p, false);
+      animateEmblem(emblem, p, false);
       progress.style.width = `${p * 100}%`;
     })
     .then(() => {
@@ -47,6 +64,10 @@ try {
     if (button) select(button.dataset.theme as ThemeId);
   });
   document.querySelector("#demo-play")!.addEventListener("click", play);
+  appPicker.addEventListener("change", () => {
+    selectApplication();
+    play();
+  });
   loop.addEventListener("change", () => {
     if (loop.checked) play();
     else clearTimeout(timer);

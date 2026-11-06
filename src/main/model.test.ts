@@ -40,3 +40,37 @@ test("persisted configuration rejects duplicate IDs and unsafe URLs", () => {
     }),
   );
 });
+test("per-app settings preserve legacy defaults and reject invalid overrides", () => {
+  const state = {
+    version: 1,
+    targets: [
+      { id: "legacy", name: "Legacy", path: null, theme: "portal" },
+      {
+        id: "custom",
+        name: "Custom",
+        path: null,
+        theme: "paper",
+        preferences: { duration: 900, reducedMotion: true },
+      },
+    ],
+    preferences: { duration: 1800, reducedMotion: false },
+  };
+  const decoded = decodeState(state);
+  assert.equal(decoded.targets[0].preferences, undefined);
+  assert.deepEqual(decoded.preferences, state.preferences);
+  assert.deepEqual(decoded.targets[1].preferences, {
+    duration: 900,
+    reducedMotion: true,
+  });
+  assert.throws(() =>
+    decodeState({
+      ...state,
+      targets: [
+        {
+          ...state.targets[1],
+          preferences: { duration: 90000, reducedMotion: true },
+        },
+      ],
+    }),
+  );
+});

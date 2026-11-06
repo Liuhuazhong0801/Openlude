@@ -35,6 +35,29 @@ try {
   );
   await page.waitForSelector("canvas.motion-canvas", { timeout: 10000 });
   await page.locator("#demo-loop").uncheck();
+  const sources = new Set();
+  for (const [id, name] of [
+    ["codex", "Codex"],
+    ["workbuddy", "WorkBuddy"],
+    ["deepseek", "DeepSeek"],
+    ["doubao", "豆包"],
+  ]) {
+    await page.locator("#demo-app").selectOption(id);
+    await page.waitForSelector("#demo-app-icon:not([hidden])");
+    assert.equal(await page.locator("#demo-app-name").innerText(), name);
+    const source = await page.locator("#demo-app-icon").getAttribute("src");
+    assert.ok(source.startsWith("data:image/"));
+    sources.add(source);
+  }
+  assert.equal(sources.size, 4);
+  assert.equal(
+    (await page.locator("#demo-stage").innerText()).includes("TimeGate"),
+    false,
+  );
+  report.checks.push(
+    "Four target icons and names are embedded and switch correctly; no launcher identity in the scene",
+  );
+  await page.locator("#demo-app").selectOption("codex");
   const box = await page.locator("#demo-stage").boundingBox();
   const clip = {
     x: box.x + 20,
@@ -51,12 +74,12 @@ try {
     assert.equal(
       early.equals(later),
       false,
-      `${theme} is static outside the center brand`,
+      `${theme} is static outside the target icon`,
     );
     await page
       .locator("#demo-stage")
       .screenshot({ path: path.join(out, `${theme}.png`) });
-    report.checks.push(`${theme}: scene pixels change outside the brand layer`);
+    report.checks.push(`${theme}: scene pixels change outside the target icon`);
     console.log("PASS", theme);
     await page.waitForTimeout(1500);
   }

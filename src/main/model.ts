@@ -62,6 +62,9 @@ export function decodeState(input: unknown): SavedState {
       theme: themeId(t.theme),
       builtin: !!t.builtin,
       ...(t.url ? { url: t.url } : {}),
+      ...(t.preferences !== undefined
+        ? { preferences: preferences(t.preferences) }
+        : {}),
     };
   });
   return { version: 1, targets, preferences: preferences(s.preferences) };

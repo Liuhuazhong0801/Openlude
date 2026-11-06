@@ -1,0 +1,13 @@
+{
+  "scope": "Browser renderer only; no native launch assertions",
+  "checks": [
+    "Four target icons and names are embedded and switch correctly; no launcher identity in the scene",
+    "portal: scene pixels change outside the target icon",
+    "aurora: scene pixels change outside the target icon",
+    "paper: scene pixels change outside the target icon",
+    "pixel: scene pixels change outside the target icon",
+    "ink: scene pixels change outside the target icon"
+  ],
+  "errors": [],
+  "video": "test-results/preview/video/page@28ab35bce4122309a202d8f1df9aff45.webm"
+}

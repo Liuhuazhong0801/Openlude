@@ -16,6 +16,7 @@ import path from "node:path";
 import os from "node:os";
 import { randomUUID } from "node:crypto";
 import { allowedApplication, decodeState, preferences, themeId } from "./model";
+import { applicationIcon, presetIcon } from "./icons";
 import type {
   AnimationPayload,
   AppState,
@@ -24,6 +25,7 @@ import type {
   Target,
   ThemeId,
   ViewTarget,
+  Preferences,
 } from "../shared/types";
 
 const exec = promisify(execFile);
@@ -44,7 +46,6 @@ let resolveRun: ((value: LaunchResult) => void) | null = null;
 let watchdog: ReturnType<typeof setTimeout> | null = null;
 let state: SavedState;
 let saveQueue = Promise.resolve();
-const iconCache = new Map<string, string>();
 const renderPath = (name: string) =>
   path.join(__dirname, "../../dist-renderer", name);
 const preload = path.join(__dirname, "../preload/index.js");
@@ -162,16 +163,11 @@ function save(): Promise<void> {
 }
 async function hydrate(target: Target): Promise<ViewTarget> {
   const available = target.path ? await exists(target.path) : !!target.url;
-  let icon = target.path ? iconCache.get(target.path) : undefined;
-  if (!icon && target.path && available) {
-    icon = await app
-      .getFileIcon(target.path, {
-        size: process.platform === "darwin" ? "normal" : "large",
-      })
-      .then((x) => x.toDataURL())
-      .catch(() => undefined);
-    if (icon) iconCache.set(target.path, icon);
-  }
+  const icon =
+    (target.path && available
+      ? await applicationIcon(target.path)
+      : undefined) ??
+    (target.builtin ? await presetIcon(target.id) : undefined);
   return { ...target, available, icon };
 }
 async function viewState(): Promise<AppState> {
@@ -308,6 +304,7 @@ async function runAnimation(
   theme: ThemeId,
   target: Target | null,
   preview: boolean,
+  previewPreferences?: Preferences,
 ): Promise<LaunchResult> {
   if (busy) return { ok: false, error: "上一次启动仍在进行。" };
   if (!preview && target && !(await hydrate(target)).available)
@@ -316,12 +313,14 @@ async function runAnimation(
   busy = true;
   try {
     const hydrated = target ? await hydrate(target) : null;
+    const settings =
+      previewPreferences ?? target?.preferences ?? state.preferences;
     payload = {
       operationId: randomUUID(),
       theme,
-      duration: state.preferences.duration,
-      reducedMotion: state.preferences.reducedMotion,
-      name: target?.name ?? "TimeGate",
+      duration: settings.duration,
+      reducedMotion: settings.reducedMotion,
+      name: target?.name ?? "",
       icon: hydrated?.icon,
       preview,
     };
@@ -336,7 +335,11 @@ async function runAnimation(
       movable: false,
       show: false,
       skipTaskbar: true,
-      backgroundColor: ["paper", "ink"].includes(theme) ? "#f2efe7" : "#080e16",
+      backgroundColor: ["paper", "ink"].includes(theme)
+        ? "#f2efe7"
+        : theme === "portal"
+          ? "#15191e"
+          : "#080e16",
       alwaysOnTop: true,
       fullscreenable: false,
       hasShadow: false,
@@ -400,7 +403,7 @@ function registerIPC() {
       throw new Error("请选择有效的应用文件");
     const ownExe = app.getPath("exe");
     if (file === ownExe || ownExe.startsWith(file + path.sep))
-      throw new Error("TimeGate 自身动画请使用全屏预览，避免重复启动。");
+      throw new Error("请选择要添加启动动画的其他应用。");
     const duplicate = state.targets.find((t) => t.path === file && t.id !== id);
     if (duplicate) throw new Error(`已添加 ${duplicate.name}`);
     if (existing) existing.path = file;
@@ -423,12 +426,26 @@ function registerIPC() {
     await save();
     return viewState();
   });
-  ipcMain.handle("target:bind", async (event, id: string, theme: unknown) => {
-    mainOnly(event);
-    findTarget(id).theme = themeId(theme);
-    await save();
-    return viewState();
-  });
+  ipcMain.handle(
+    "target:bind",
+    async (event, id: string, theme: unknown, value?: unknown) => {
+      mainOnly(event);
+      const target = findTarget(id);
+      const nextTheme = themeId(theme);
+      const nextPreferences =
+        value === undefined ? target.preferences : preferences(value);
+      const previous = { theme: target.theme, preferences: target.preferences };
+      target.theme = nextTheme;
+      target.preferences = nextPreferences;
+      try {
+        await save();
+      } catch (error) {
+        Object.assign(target, previous);
+        throw error;
+      }
+      return viewState();
+    },
+  );
   ipcMain.handle("preferences", async (event, value: unknown) => {
     mainOnly(event);
     state.preferences = preferences(value);
@@ -440,10 +457,18 @@ function registerIPC() {
     const target = findTarget(id);
     return runAnimation(target.theme, target, false);
   });
-  ipcMain.handle("preview", (event, theme: unknown, id?: string) => {
-    mainOnly(event);
-    return runAnimation(themeId(theme), id ? findTarget(id) : null, true);
-  });
+  ipcMain.handle(
+    "preview",
+    (event, theme: unknown, id?: string, value?: unknown) => {
+      mainOnly(event);
+      return runAnimation(
+        themeId(theme),
+        id ? findTarget(id) : null,
+        true,
+        value === undefined ? undefined : preferences(value),
+      );
+    },
+  );
   ipcMain.handle("overlay:payload", (event) =>
     event.sender === overlay?.webContents ? payload : null,
   );
@@ -478,12 +503,12 @@ function registerIPC() {
 
 async function createMain() {
   main = new BrowserWindow({
-    width: 1220,
-    height: 830,
-    minWidth: 1000,
-    minHeight: 720,
+    width: 1320,
+    height: 850,
+    minWidth: 1120,
+    minHeight: 760,
     title: "TimeGate",
-    backgroundColor: "#101217",
+    backgroundColor: "#ffffff",
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
     trafficLightPosition: { x: 20, y: 19 },
     icon: renderPath("assets/branding/app-icon.png"),
