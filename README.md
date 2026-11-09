@@ -8,7 +8,7 @@
 
 Openlude 是一款适用于 macOS 和 Windows 的应用启动动画工具。添加自己的应用，选一个主题，保存绑定；从工作台启动，或让 Openlude 留在后台，通过原来的 Dock、桌面和开始菜单打开应用，即可播放开场动画。
 
-[下载 0.6.2 预览版](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2) · [开始使用](#开始使用) · [动画主题](#动画主题) · [参与开发](CONTRIBUTING.md) · [反馈问题](https://github.com/Liuhuazhong0801/Openlude/issues)
+[介绍网站与主题试玩](https://liuhuazhong0801.github.io/Openlude/) · [下载 0.6.2 预览版](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2) · [开始使用](#开始使用) · [动画主题](#动画主题) · [参与开发](CONTRIBUTING.md) · [反馈问题](https://github.com/Liuhuazhong0801/Openlude/issues)
 
 ## 下载与安装
 
@@ -110,6 +110,9 @@ npm run dev
 | `npm run build` | 类型检查并构建主进程、预加载、渲染界面与本机组件 |
 | `npm test` | 单元测试与正式发布前置条件检查；先运行构建 |
 | `npm run build:preview` | 生成单文件离线预览 `dist-preview/Openlude-preview.html` |
+| `npm run dev:site` | 本地预览 GitHub Pages 介绍网站 |
+| `npm run build:site` | 检查并构建介绍网站至 `dist-site/`；`main` 的网站改动通过 GitHub Actions 自动部署 |
+| `npm run test:site` | 在 Chrome 中验证八个主题、移动端布局、播放控制与减少动态效果偏好；先构建网站 |
 | `npm run test:preview` | 检查离线主题动效；需要 Chrome 与 Playwright FFmpeg |
 | `npm run test:desktop` | 检查桌面播放、绑定持久化与 macOS 前台交接 |
 | `npm run test:external` | 在 macOS 验证系统入口启动检测与交接 |

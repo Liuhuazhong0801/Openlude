@@ -1,0 +1,145 @@
+{
+  "generator": "Browser Canvas website media; desktop originals unchanged",
+  "assets": [
+    {
+      "source": "themes/comic.png",
+      "file": "previews/comic.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 430854,
+      "sourceSha256": "7d0c2e6883a96f08b7a522e876945a4d822f0a4172524e0f0ecf4a33d8ea72d3",
+      "sha256": "43a8d00bcaa84109f3801731ca5bf0fd2d21419daca76bbbca1cb6e0b3af226d"
+    },
+    {
+      "source": "themes/anime.png",
+      "file": "previews/anime.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 261918,
+      "sourceSha256": "eebba2cbd8953101ffb0a1248eb8dd5ef76d767b63fb58540553aa4c800b0d0b",
+      "sha256": "6d28a9ac87a1e4195f2fe2592da6091657573d0ccf59f3b418a56f5f470b7c15"
+    },
+    {
+      "source": "themes/portal.png",
+      "file": "previews/portal.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 142080,
+      "sourceSha256": "925445eba066dc8669becd061150d8d5a527ea564abb0377df2c8305724c3260",
+      "sha256": "a7b0326a5118cb227142e3e8f4c4499105a6d490795ed8d56683d6ae84d5d930"
+    },
+    {
+      "source": "themes/paper.png",
+      "file": "previews/paper.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 287132,
+      "sourceSha256": "0a491a214548906d927ffac42cbf718e74f0f3020b252746ce28b52680c638df",
+      "sha256": "290fc73a09e88b05f17a09518bc6e4c51b5b4f920e2b7e41bb79ba48660494e3"
+    },
+    {
+      "source": "themes/pixel.png",
+      "file": "previews/pixel.webp",
+      "width": 1056,
+      "type": "image/webp",
+      "height": 594,
+      "bytes": 23900,
+      "sourceSha256": "b0be0e3e4224c95796c71f8cb12c5d2a614a69a56d6727a2fc49506c0a0b1cba",
+      "sha256": "2cc399f4b025ddc43324ffd1bca43d5d3596a48827ed5e26d622e3c861d59019"
+    },
+    {
+      "source": "themes/ink.png",
+      "file": "previews/ink.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 61982,
+      "sourceSha256": "b633a972591d7b756b8f51199b88cf97760aeb14861bb3de7b44a9712e813633",
+      "sha256": "27bbeb880701965076d1133b12d11bf7b8d3c7774be72735ce3a79dd2c5515e1"
+    },
+    {
+      "source": "themes/frog.png",
+      "file": "previews/frog.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 13400,
+      "sourceSha256": "4c2b4301eb3cb5fc49fc9f4b1db56d0e8714460b975c4905b53d26522f65ace7",
+      "sha256": "ba620834bd23e92b4ecbdb27600e59adf1d7857ed6fe4b836981d39c474541ce"
+    },
+    {
+      "source": "themes/feidudu.png",
+      "file": "previews/feidudu.webp",
+      "width": 1280,
+      "type": "image/webp",
+      "height": 720,
+      "bytes": 14696,
+      "sourceSha256": "0e1da3607a8483ed19501a67c43b33181ed5423a38ec40fc9561fc5866d5af5f",
+      "sha256": "abef52736fc4958d6a3b171f32295222b00a23130eaad4c22d987fde26735bcc"
+    },
+    {
+      "source": "themes/comic.png",
+      "file": "themes/web/comic.webp",
+      "width": 1672,
+      "type": "image/webp",
+      "height": 941,
+      "bytes": 744714,
+      "sourceSha256": "7d0c2e6883a96f08b7a522e876945a4d822f0a4172524e0f0ecf4a33d8ea72d3",
+      "sha256": "554cc44b5ec73a4c02f3bb3c342871fd442e01598a1f2035e6922387d515fb1d"
+    },
+    {
+      "source": "themes/anime.png",
+      "file": "themes/web/anime.webp",
+      "width": 1672,
+      "type": "image/webp",
+      "height": 941,
+      "bytes": 430816,
+      "sourceSha256": "eebba2cbd8953101ffb0a1248eb8dd5ef76d767b63fb58540553aa4c800b0d0b",
+      "sha256": "6df71f460627d9fd0fa3f6bd9a8f0448dbf58d05f44488439953a07be567e249"
+    },
+    {
+      "source": "themes/night-train.png",
+      "file": "themes/web/night-train.webp",
+      "width": 1672,
+      "type": "image/webp",
+      "height": 941,
+      "bytes": 444952,
+      "sourceSha256": "7dc59858f3488179c1b96b5f012fe9a635c8b355cbd066b800fe6cf1bd10b106",
+      "sha256": "ab2137e7f9257756bca1e4663878e8961f9085de8e3d2c3c279e6eaa8e8750e1"
+    },
+    {
+      "source": "themes/paper-world.png",
+      "file": "themes/web/paper-world.webp",
+      "width": 1672,
+      "type": "image/webp",
+      "height": 941,
+      "bytes": 547912,
+      "sourceSha256": "7487e12fd5a567cf9ec091127836343faa8a0860ee66b0396a308ee2c7ae0e19",
+      "sha256": "b80e6122e3ece912b32ca7adb4bb599e0fe078a6258588b29a36210e25d49077"
+    },
+    {
+      "source": "branding/app-icon.png",
+      "file": "brand/icon.png",
+      "width": 192,
+      "type": "image/png",
+      "height": 192,
+      "bytes": 55462,
+      "sourceSha256": "0aa2064beb97a055d09a86b436a770163b7ae26fce015d8a42f5e81cbd288ad7",
+      "sha256": "51ea0073bccd9fa5f1d2761e91b461e3748c94472158b2bfc83260358742c21f"
+    },
+    {
+      "source": "branding/app-icon.png",
+      "file": "brand/favicon.png",
+      "width": 32,
+      "type": "image/png",
+      "height": 32,
+      "bytes": 2298,
+      "sourceSha256": "0aa2064beb97a055d09a86b436a770163b7ae26fce015d8a42f5e81cbd288ad7",
+      "sha256": "fe94e88fea07eb7453ecf2f8bdeb5f54913f261b50daa00290f33f5e679c285e"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Openlude — 应用启动动画</title>
+  <meta name="description" content="__SITE_DESCRIPTION__">
+  <meta name="theme-color" content="#fafafa">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Openlude — 应用启动动画">
+  <meta property="og:description" content="__SITE_DESCRIPTION__">
+  <meta property="og:url" content="__SITE_URL__">
+  <meta property="og:image" content="__SITE_URL__assets/previews/portal.webp">
+  <link rel="canonical" href="__SITE_URL__">
+  <link rel="icon" type="image/png" href="./assets/brand/favicon.png">
+  <link rel="apple-touch-icon" href="./assets/brand/icon.png">
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="module" src="./src/main.ts"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+  <header class="site-header wrap">
+    <a class="brand" href="#" aria-label="Openlude 首页"><img src="./assets/brand/icon.png" width="32" height="32" alt=""><span>Openlude</span></a>
+    <nav aria-label="主导航"><a href="#themes">主题预览</a><a href="#how-it-works">使用方法</a><a href="https://github.com/Liuhuazhong0801/Openlude">GitHub ↗</a></nav>
+  </header>
+  <main class="wrap" id="main">
+    <section class="intro" id="download" aria-labelledby="intro-title">
+      <div class="intro-copy"><h1 id="intro-title">Openlude</h1><p class="lead">给应用加一段启动动画。</p><p class="intro-description">支持 macOS 和 Windows。为应用选好主题、保存绑定后，<br class="desktop-break">可以从 Openlude 启动，也可以留在后台，沿用原来的应用入口。</p><a class="docs-link" href="https://github.com/Liuhuazhong0801/Openlude#开始使用">使用说明 ↗</a></div>
+      <div class="download-panel"><div class="download-heading"><h2>下载</h2><a data-release-link class="release-tag" href="https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2"><span data-version>v0.6.2</span> 预览版 ↗</a></div><div class="download-options"><a data-download="macos-arm64" href="https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-arm64.dmg"><span>macOS · M 系列</span><span class="file-type">DMG ↓</span></a><a data-download="macos-x64" href="https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-x64.dmg"><span>macOS · Intel</span><span class="file-type">DMG ↓</span></a><a data-download="windows-x64" href="https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-windows-x64-setup.exe"><span>Windows · 64 位</span><span class="file-type">EXE ↓</span></a></div><p class="package-note">Mac 预览包未公证，Windows 预览包未签名。<br><a data-release-link href="https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2">ZIP、校验值与发布说明 ↗</a></p></div>
+    </section>
+
+    <section class="theme-demo" id="themes" aria-labelledby="demo-heading">
+      <div class="section-heading"><h2 id="demo-heading">主题预览</h2><span class="theme-count" id="theme-count">03 / 08</span></div>
+      <div class="preview-layout"><aside class="theme-sidebar" aria-label="动画主题"><div class="theme-picker" id="theme-picker" role="group" aria-label="选择动画主题"></div></aside><div class="preview-shell"><div class="demo-stage" id="demo-stage" data-theme="portal"><img id="demo-poster" class="demo-poster" src="./assets/previews/portal.webp" width="1280" height="720" fetchpriority="high" alt="星海列车主题预览"><div id="canvas-host" class="canvas-host"></div></div><div class="preview-progress" role="progressbar" aria-label="主题播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="demo-progress"><span></span></div><div class="preview-toolbar"><div class="theme-caption"><h3 id="theme-name">星海列车</h3><p id="theme-caption">车窗、雨滴与移动的城市夜景</p></div><div class="preview-actions"><button type="button" id="sound-control" class="sound-control" hidden aria-pressed="false">原声：关</button><button type="button" class="play-control" id="play-control" aria-label="播放星海列车主题">播放</button></div></div></div></div>
+      <p class="demo-note" id="demo-status" role="status">演示默认静音，不会启动本机应用。</p>
+      <noscript><p class="demo-note">启用 JavaScript 可播放主题动画。下载链接与使用说明不受影响。</p></noscript>
+    </section>
+
+    <section class="usage-section" id="how-it-works" aria-labelledby="usage-heading"><h2 id="usage-heading">使用方法</h2><ol class="steps"><li><h3>1. 添加应用</h3><p>选择本机的 <code>.app</code>，或 Windows 的 <code>.exe</code> / <code>.lnk</code>。首次打开时列表为空，由你自己添加。</p></li><li><h3>2. 选主题，保存绑定</h3><p>选择主题，按需调整时长、图标开场、原声或柔和模式，点击「保存绑定」。</p></li><li><h3>3. 打开应用</h3><p>点击「启动应用」。也可以让 Openlude 保持后台运行，再从 Dock、桌面或开始菜单打开。</p></li></ol><p class="usage-note">每个应用单独保存设置。支持系统深浅主题、登录启动和菜单栏 / 系统托盘；设置入口在工作台左下角。</p></section>
+
+    <section class="faq-section" aria-labelledby="faq-heading"><h2 id="faq-heading">常见问题</h2><div class="faq-list"><details><summary>从原来的入口打开，为什么没有动画？<span aria-hidden="true">+</span></summary><p>请确认 Openlude 仍在运行，并开启「设置 → 通用 → 从系统入口启动时播放动画」（默认开启）。检测只对新启动的已绑定应用生效，已经运行的应用切回前台时不会重复播放。</p></details><details><summary>动画什么时候出现，能跳过吗？<span aria-hidden="true">+</span></summary><p>从 Openlude 启动时先显示动画；系统入口检测发生在应用启动之后，启动很快的软件可能先出现自己的窗口。动画末段会渐隐，露出后方应用。全屏播放时可以按 Esc 跳过。</p></details><details><summary>这个版本可以自动更新吗？<span aria-hidden="true">+</span></summary><p>当前 0.6.2 是预览版，需要从上方手动下载，不进入正式自动更新通道。应用已提供检查、下载和重启安装入口，正式自动更新仍需签名、公证及跨版本升级验收。</p></details></div></section>
+  </main>
+  <footer class="site-footer wrap"><span>Openlude · <span data-version>v0.6.2</span></span><div><a href="https://github.com/Liuhuazhong0801/Openlude">GitHub</a><a href="https://github.com/Liuhuazhong0801/Openlude/issues">反馈问题</a><a href="https://github.com/Liuhuazhong0801/Openlude/blob/main/LICENSE">MIT 许可</a><a href="https://github.com/Liuhuazhong0801/Openlude/blob/main/THIRD_PARTY_NOTICES.md">第三方素材</a></div></footer>
+</body>
+</html>

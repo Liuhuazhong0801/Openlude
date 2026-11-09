@@ -3,6 +3,7 @@ dist-preview/
 dist-electron/
 dist-renderer/
 dist-native/
+dist-site/
 release/
 test-results/
 .DS_Store
