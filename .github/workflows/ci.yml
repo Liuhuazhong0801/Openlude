@@ -89,7 +89,8 @@ jobs:
         run: npm run build
       - name: Package preview installers and record checksums
         env:
-          DEBUG: "@electron/get*"
+          # Builder validates mirrored Mac tools against its pinned upstream checksums.
+          ELECTRON_BUILDER_BINARIES_MIRROR: ${{ runner.os == 'macOS' && 'https://npmmirror.com/mirrors/electron-builder-binaries/' || '' }}
         run: npm run pack:preview -- --arch ${{ matrix.arch }}
       - name: Upload downloadable preview packages
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
