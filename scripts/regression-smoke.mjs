@@ -73,6 +73,33 @@ try {
   assert.notDeepEqual(trainEarly.slice(1), trainLater.slice(1), "The view through the glass must move");
   report.trainPixels = { early: trainEarly, later: trainLater };
   check("The train draws the full window; the carriage remains fixed while the skyline and water move");
+  for (const theme of ["frog", "feidudu"]) {
+    await view.evaluate(theme => window.select(theme), theme);
+    await view.waitForTimeout(200);
+    const video = await view.locator("video").evaluate(video => ({ paused: video.paused, muted: video.muted, time: video.currentTime, readyState: video.readyState }));
+    assert.equal(video.paused, true); assert.equal(video.muted, true); assert.equal(video.time, 0);
+    const box = await view.locator("#stage").boundingBox();
+    // Capture what is displayed; rendering explicitly here would hide a missing repaint.
+    const image = await view.screenshot({ scale: "css", clip: { x: box.x + box.width * .42, y: box.y + box.height * .35, width: box.width * .16, height: box.height * .3 } });
+    await fs.writeFile(path.join(out, `${theme}-idle.png`), image);
+    const pixels = await view.evaluate(async encoded => {
+      const image = new Image(); image.src = "data:image/png;base64," + encoded; await image.decode();
+      const canvas = document.createElement("canvas"); canvas.width = image.width; canvas.height = image.height;
+      const context = canvas.getContext("2d"); context.drawImage(image, 0, 0);
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let visible = 0, colored = 0;
+      for (let index = 0; index < data.length; index += 4) {
+        const [r, g, b] = data.subarray(index, index + 3);
+        if (r + g + b > 45) visible++;
+        if (Math.max(r, g, b) - Math.min(r, g, b) > 45) colored++;
+      }
+      const total = data.length / 4;
+      return { visible: visible / total, colored: colored / total };
+    }, image.toString("base64"));
+    (report.idleVideoPreviews ??= {})[theme] = { video, pixels };
+    assert.ok(pixels.visible > .5 && pixels.colored > .03, `${theme}: the paused preview must show the original character instead of a black texture`);
+    check(`${theme}: first decoded frame is visible before playback, without autoplay or sound`);
+  }
   await view.evaluate(() => window.select("frog")); const stopped = await view.evaluate(() => window.stopRace());
   assert.equal(stopped.paused, true); assert.equal(stopped.muted, true); assert.ok(stopped.currentTime < .1); report.stoppedVideo = stopped;
   check("Stopping a pending video play does not restart playback from an AbortError handler");
