@@ -41,7 +41,11 @@ jobs:
         run: npm test
       - name: Verify Windows observer input and process detection
         if: runner.os == 'Windows'
-        run: npm run test:windows-observer
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: ""
+        run: |
+          node node_modules/electron/install.js
+          npm run test:windows-observer
       - name: Build standalone motion preview
         run: npm run build:preview
 

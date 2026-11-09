@@ -66,11 +66,22 @@ try {
     fixture = undefined;
     check("Reconfiguration snapshots existing processes and termination is detected");
 
-    const shortcut = path.join(directory, "shortcut.lnk"), createShortcut = path.join(directory, "shortcut.ps1");
-    await fs.writeFile(createShortcut, `param([string]$Target,[string]$Link)\n$ErrorActionPreference="Stop"\n[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)\n$shell=New-Object -ComObject WScript.Shell\n$item=$shell.CreateShortcut($Link)\n$item.TargetPath=$Target\n$item.Save()\n$reopened=$shell.CreateShortcut($Link)\n@{target=$reopened.TargetPath;exists=(Test-Path -LiteralPath $reopened.TargetPath);link=$Link} | ConvertTo-Json -Compress\n`);
-    const shortcutResult = await exec(runtime, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", createShortcut, executable, shortcut], { windowsHide: true });
-    assert.ok(shortcutResult.stdout.trim(), `Shortcut creation failed: ${shortcutResult.stderr}`);
-    const shortcutInfo = JSON.parse(shortcutResult.stdout.replace(/^\uFEFF/, ""));
+    const shortcut = path.join(directory, "shortcut.lnk"), createShortcut = path.join(directory, "shortcut.cjs");
+    // Use the Windows Unicode shell API, rather than WScript's ANSI TargetPath setter.
+    await fs.writeFile(createShortcut, `const {app,shell}=require("electron");
+const fs=require("node:fs"),path=require("node:path");
+app.setPath("userData",path.join(path.dirname(process.argv[2]),"electron-state"));
+app.whenReady().then(()=>{
+ if(!shell.writeShortcutLink(process.argv[2],"create",{target:process.argv[3]}))throw new Error("Shortcut creation failed");
+ const info=shell.readShortcutLink(process.argv[2]);
+ console.log("SHORTCUT:"+JSON.stringify({target:info.target,exists:fs.existsSync(info.target)}));app.quit();
+}).catch(error=>{console.error(error);app.exit(1);});
+`);
+    const { default: electronExecutable } = await import("electron");
+    const shortcutResult = await exec(electronExecutable, [createShortcut, shortcut, executable], { windowsHide: true, timeout: 30000 });
+    const shortcutLine = shortcutResult.stdout.split(/\r?\n/).find(line => line.startsWith("SHORTCUT:"));
+    assert.ok(shortcutLine, `Shortcut creation failed: ${shortcutResult.stderr}`);
+    const shortcutInfo = JSON.parse(shortcutLine.slice("SHORTCUT:".length));
     assert.equal(shortcutInfo.exists, true, `Invalid shortcut fixture: ${shortcutResult.stdout}`);
     configure([{ id: "shortcut", path: shortcut }]);
     await until(() => messages.filter(m => m.type === "ready").length === 3);
