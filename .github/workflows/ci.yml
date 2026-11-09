@@ -43,6 +43,8 @@ jobs:
         if: runner.os == 'Windows'
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: ""
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+          ELECTRON_CUSTOM_DIR: "{{ version }}"
         run: |
           node node_modules/electron/install.js
           npm run test:windows-observer
@@ -69,6 +71,9 @@ jobs:
             arch: x64
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
+      ELECTRON_CUSTOM_DIR: "{{ version }}"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -91,9 +96,4 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 0
-          path: |
-            release/preview/**/*.dmg
-            release/preview/**/*.zip
-            release/preview/**/*.exe
-            release/preview/**/build-info-*.json
-            release/preview/**/SHA256SUMS-*.txt
+          path: release/preview/${{ matrix.platform }}-${{ matrix.arch }}/downloads/
