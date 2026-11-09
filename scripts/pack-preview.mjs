@@ -19,6 +19,9 @@ const pkg = JSON.parse(await fs.readFile(path.join(root, "package.json"), "utf8"
 const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
 process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false";
 const mac = process.platform === "darwin";
+// Preview builds use only the ad-hoc "-" identity, including in PR CI. No signing
+// certificate or keychain is provisioned by this workflow.
+if (mac) process.env.CSC_FOR_PULL_REQUEST = "true";
 // Verify the runtime against the checksums shipped in our lockfile-pinned Electron package.
 const electronRequire = createRequire(path.join(root, "node_modules/electron/install.js"));
 const { downloadArtifact } = electronRequire("@electron/get");
