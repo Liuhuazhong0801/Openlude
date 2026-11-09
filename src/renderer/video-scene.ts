@@ -51,7 +51,12 @@ export class VideoScene {
       const loaded = () => {
         clean();
         this.uniforms.sourceAspect.value = video.videoWidth / video.videoHeight;
-        if (!this.disposed) repaint();
+        if (!this.disposed) {
+          // The paused first frame can load before VideoTexture's compositor
+          // callback. Upload it before the one-shot idle-preview repaint.
+          this.texture.needsUpdate = true;
+          repaint();
+        }
         resolve();
       };
       const failed = () => { clean(); reject(new Error("原版主题视频加载失败，请重新打开应用。")); };
