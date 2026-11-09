@@ -1,0 +1,419 @@
+{
+  "errors": [],
+  "contexts": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "creation": {
+        "constructorMs": 43.30000019073486,
+        "readyMs": 49.5,
+        "loads": [],
+        "stats": {
+          "geometries": 1,
+          "textures": 0,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "frames": [
+        {
+          "theme": "portal",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080,
+          "synchronousFrameMs": {
+            "median": 0.09999990463256836,
+            "p95": 0.20000004768371582,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999932,
+            "p95": 16.80000000000001,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "aurora",
+          "geometries": 1,
+          "textures": 2,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080,
+          "synchronousFrameMs": {
+            "median": 0.09999990463256836,
+            "p95": 0.2999999523162842,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.700000000000045,
+            "p95": 16.700000000000045,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "anime",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080,
+          "synchronousFrameMs": {
+            "median": 0.20000004768371582,
+            "p95": 0.3000001907348633,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.799999999999727,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "paper",
+          "geometries": 71,
+          "textures": 3,
+          "programs": 3,
+          "width": 1920,
+          "height": 1080,
+          "synchronousFrameMs": {
+            "median": 0.5999999046325684,
+            "p95": 1,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000273,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "ink",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080,
+          "synchronousFrameMs": {
+            "median": 0.20000004768371582,
+            "p95": 0.40000009536743164,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.800000000000182,
+            "samples": 46
+          }
+        }
+      ],
+      "capped": null,
+      "stopRace": {
+        "immediate": {
+          "paused": true,
+          "time": 0
+        },
+        "later": {
+          "paused": true,
+          "time": 0.000018,
+          "muted": true
+        }
+      },
+      "disposePending": {
+        "settled": true,
+        "events": []
+      },
+      "lifecycle": [
+        {
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080
+        },
+        {
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 1920,
+          "height": 1080
+        }
+      ]
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 2,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "creation": {
+        "constructorMs": 7.799999952316284,
+        "readyMs": 13.099999904632568,
+        "loads": [],
+        "stats": {
+          "geometries": 1,
+          "textures": 0,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440
+        }
+      },
+      "frames": [
+        {
+          "theme": "portal",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.20000004768371582,
+            "p95": 0.40000009536743164,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.69999999999999,
+            "p95": 16.700000000000045,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "aurora",
+          "geometries": 1,
+          "textures": 2,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.2999999523162842,
+            "p95": 0.40000009536743164,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.700000000000045,
+            "p95": 16.700000000000045,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "anime",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.2999999523162842,
+            "p95": 0.40000009536743164,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000273,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "paper",
+          "geometries": 71,
+          "textures": 3,
+          "programs": 3,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.7000000476837158,
+            "p95": 1.3000001907348633,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000273,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "ink",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.20000004768371582,
+            "p95": 0.3000001907348633,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000728,
+            "samples": 46
+          }
+        }
+      ],
+      "capped": {
+        "theme": "ink",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 1,
+        "width": 1920,
+        "height": 1080,
+        "synchronousFrameMs": {
+          "median": 0.19999980926513672,
+          "p95": 0.2999999523162842,
+          "samples": 46
+        },
+        "rafIntervalMs": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000728,
+          "samples": 46
+        }
+      },
+      "stopRace": null
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "dpr": 2,
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+      "creation": {
+        "constructorMs": 11.200000047683716,
+        "readyMs": 16.700000047683716,
+        "loads": [],
+        "stats": {
+          "geometries": 1,
+          "textures": 0,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440
+        }
+      },
+      "frames": [
+        {
+          "theme": "portal",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.09999990463256836,
+            "p95": 0.20000004768371582,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999932,
+            "p95": 16.700000000000045,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "aurora",
+          "geometries": 1,
+          "textures": 2,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.09999990463256836,
+            "p95": 0.20000004768371582,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000045,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "anime",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.10000014305114746,
+            "p95": 0.20000004768371582,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.700000000000273,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "paper",
+          "geometries": 71,
+          "textures": 3,
+          "programs": 3,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.2999999523162842,
+            "p95": 0.5,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.800000000000182,
+            "samples": 46
+          }
+        },
+        {
+          "theme": "ink",
+          "geometries": 1,
+          "textures": 1,
+          "programs": 1,
+          "width": 2560,
+          "height": 1440,
+          "synchronousFrameMs": {
+            "median": 0.10000014305114746,
+            "p95": 0.2999999523162842,
+            "samples": 46
+          },
+          "rafIntervalMs": {
+            "median": 16.699999999999818,
+            "p95": 16.800000000000182,
+            "samples": 46
+          }
+        }
+      ],
+      "capped": {
+        "theme": "ink",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 1,
+        "width": 2560,
+        "height": 1440,
+        "synchronousFrameMs": {
+          "median": 0.09999990463256836,
+          "p95": 0.20000004768371582,
+          "samples": 46
+        },
+        "rafIntervalMs": {
+          "median": 16.699999999999818,
+          "p95": 16.700000000000728,
+          "samples": 46
+        }
+      },
+      "stopRace": null
+    }
+  ]
+}

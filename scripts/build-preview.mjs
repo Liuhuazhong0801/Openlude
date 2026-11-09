@@ -47,7 +47,7 @@ for (const filename of [
     `data:${mime};base64,${icon.toString("base64")}`,
   );
 }
-for (const [filename, mime] of [["maple.jpg", "image/jpeg"]]) {
+for (const [filename, mime] of [["comic.png", "image/png"], ["anime.png", "image/png"], ["paper-world.png", "image/png"], ["night-train.png", "image/png"], ["originals/frog.mp4", "video/mp4"], ["originals/feidudu.mp4", "video/mp4"]]) {
   const asset = await fs.readFile(`public/assets/themes/${filename}`);
   html = html.replaceAll(`./assets/themes/${filename}`, `data:${mime};base64,${asset.toString("base64")}`);
 }

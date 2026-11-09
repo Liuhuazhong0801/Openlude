@@ -1,6 +1,7 @@
 import "./style.css";
 import {
   THEMES,
+  themeHasSound,
   type AppState,
   type ThemeId,
   type Preferences,
@@ -9,7 +10,8 @@ import {
 import { MotionScene } from "./motion";
 import { LaunchPlayback } from "./playback";
 import { initializeSettings } from "./settings";
-import { animationDuration, playbackPreferences } from "../shared/transition";
+import { ThemeCarousel } from "./theme-carousel";
+import { animationDuration, playbackPreferences, THEME_MOTION_DURATIONS } from "../shared/transition";
 
 const paths: Record<string, string> = {
   play: "M9 5l11 7-11 7V5z",
@@ -20,6 +22,8 @@ const paths: Record<string, string> = {
   settings: "M12 8a4 4 0 100 8 4 4 0 000-8M10 2h4l1 3 3 1 3-1 2 4-2 2v3l2 2-2 4-3-1-3 1-1 3h-4l-1-3-3-1-3 1-2-4 2-2v-3L1 9l2-4 3 1 3-1 1-3",
   trash: "M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6M14 11v6",
   close: "M6 6l12 12M6 18L18 6",
+  previous: "M14 6l-6 6 6 6",
+  next: "M10 6l6 6-6 6",
 };
 const icon = (name: string, size = 16) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
@@ -46,32 +50,33 @@ $("#app").innerHTML = `
   </aside>
   <main class="content">
     <section class="empty-workspace" id="empty-workspace" hidden><h1>添加你的第一个应用</h1><p>选择本机应用，为它设置启动动画。</p><button class="button primary" id="add-first-app">添加应用</button></section>
-    <header class="target-header" id="target-header">
+    <header class="target-header" id="target-header" hidden>
       <img id="target-icon" alt="" hidden>
       <div class="target-title"><h1 id="target-name">选择应用</h1><p id="target-status">为应用设置启动动画</p></div>
       <div class="target-actions"><button class="button" id="launch-target" disabled>启动应用</button></div>
     </header>
-    <section class="themes" id="theme-section" aria-labelledby="themes-title">
-      <h2 id="themes-title">动画主题</h2>
-      <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art"><img src="./assets/themes/${t.id === "maple" ? "maple.jpg" : `${t.id}.png`}" alt=""><span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
+    <section class="themes" id="theme-section" aria-labelledby="themes-title" hidden>
+      <div class="section-heading"><h2 id="themes-title">动画主题</h2><div class="theme-navigation"><button class="icon-button" id="previous-themes" aria-label="上一个主题">${icon("previous")}</button><button class="icon-button" id="next-themes" aria-label="下一个主题">${icon("next")}</button></div></div>
+      <div class="theme-grid" role="group" aria-label="动画主题">${THEMES.map((t) => `<button class="theme-card" data-theme="${t.id}" aria-pressed="false"><div class="theme-art"><img data-src="./assets/themes/thumbnails/${t.id}.webp" width="256" height="144" decoding="async" alt=""><span class="theme-tick">${icon("check", 12)}</span></div><strong>${t.name}</strong></button>`).join("")}</div>
     </section>
-    <section class="preview-section" id="preview-section" aria-labelledby="preview-title">
+    <section class="preview-section" id="preview-section" aria-labelledby="preview-title" hidden>
       <div class="section-heading"><h2 id="preview-title">预览</h2><span id="theme-name"></span></div>
       <div class="stage" id="preview-stage"><div class="app-emblem"><img id="preview-icon" alt="" hidden></div></div>
       <div class="playback-bar"><button class="button" id="play">${icon("play")}播放</button><div class="playback-track" role="progressbar" aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="preview-progress"></i></div><span id="time-label">1.8 秒</span><button class="button" id="fullscreen" aria-label="全屏预览">${icon("expand")}全屏</button></div>
     </section>
   </main>
-  <aside class="inspector" id="settings" aria-labelledby="settings-title">
+  <aside class="inspector" id="settings" aria-labelledby="settings-title" hidden>
     <h2 id="settings-title">动画设置</h2>
     <div class="setting-block" id="duration-setting"><div class="field-heading"><label for="duration">时长</label><div class="number-field"><input id="duration-value" aria-label="动画时长（秒）" type="number" min="0.6" max="3" step="0.1" value="1.8"><span>秒</span></div></div><input id="duration" type="range" min="600" max="3000" step="100" value="1800"><div class="range-limits"><span>0.6 秒</span><span>3.0 秒</span></div></div>
     <div class="setting-block fixed-duration" id="fixed-duration" hidden><div class="field-heading"><span>动画时长</span><strong>4 秒</strong></div></div>
     <label class="toggle-line"><span>显示应用图标</span><input type="checkbox" id="show-app-icon" checked><span class="switch" aria-hidden="true"></span></label>
     <label class="toggle-line"><span>柔和模式</span><input type="checkbox" id="reduced-motion"><span class="switch" aria-hidden="true"></span></label>
+    <label class="toggle-line" id="theme-sound-setting" hidden><span>主题原声</span><input type="checkbox" id="theme-sound"><span class="switch" aria-hidden="true"></span></label>
     <div class="inspector-bottom"><p id="save-status" aria-live="polite"></p><button class="button primary" id="apply" disabled>保存绑定</button></div>
   </aside>
 </div>
 <div class="toast" role="status" aria-live="polite" id="toast"></div>
-<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><h2>使用启动动画</h2><ol><li>点击“添加应用”，选择本机安装的应用。</li><li>选择主题，调整时长、图标开场和柔和模式，点击“保存绑定”。</li><li>点击“启动应用”，播放已保存的动画并打开应用。</li></ol><p>播放和全屏只预览当前设置。切换应用会保留本次未保存的修改，关闭工作台则放弃这些修改。</p><p>原来的 Dock、任务栏图标仍按系统原有方式启动。应用移动后，可将鼠标移到左侧应用上，点击删除图标移除，再重新添加。</p><button class="button" id="help-done">知道了</button></dialog>`;
+<dialog id="help"><button class="icon-button dialog-close" id="close-help" aria-label="关闭说明">${icon("close")}</button><h2>使用启动动画</h2><ol><li>点击“添加应用”，选择本机安装的应用。</li><li>选择主题，调整时长、图标开场和柔和模式，点击“保存绑定”。</li><li>点击“启动应用”，播放已保存的动画并打开应用。</li></ol><p>播放和全屏只预览当前设置。切换应用或隐藏到后台会保留草稿；退出 Openlude 才会放弃未保存的修改。</p><p>Openlude 留在后台时，通过原来的 Dock、桌面或开始菜单新启动已绑定应用，也会播放保存的动画。已经运行的应用切回前台时不重复播放。应用移动后，可将鼠标移到左侧应用上，点击删除图标移除，再重新添加。</p><button class="button" id="help-done">知道了</button></dialog>`;
 
 interface Draft extends Preferences {
   theme: ThemeId;
@@ -111,7 +116,8 @@ function changed(t: ViewTarget) {
     (d.theme !== s.theme ||
       d.duration !== s.duration ||
       d.reducedMotion !== s.reducedMotion ||
-      d.showAppIcon !== s.showAppIcon)
+      d.showAppIcon !== s.showAppIcon ||
+      !!d.playThemeSound !== !!s.playThemeSound)
   );
 }
 function toast(message: string, error = false) {
@@ -178,13 +184,15 @@ function status(t: ViewTarget) {
 function updateControls() {
   const t = target();
   const settings = draft();
-  const fixed = settings.theme === "maple";
+  const fixed = !!THEME_MOTION_DURATIONS[settings.theme];
   $("#duration-setting").hidden = fixed;
   $("#fixed-duration").hidden = !fixed;
+  $("#fixed-duration strong").textContent = `${(THEME_MOTION_DURATIONS[settings.theme] ?? 0) / 1000} 秒`;
   $("#time-label").textContent = `${(animationDuration(playbackPreferences(settings.theme, {
     ...settings, showAppIcon: settings.showAppIcon && !!t?.icon,
   })) / 1000).toFixed(1)} 秒`;
   const busy = nativeBusy || saving;
+  $("#theme-sound-setting").hidden = !themeHasSound(settings.theme);
   applyButton.disabled = !t || busy || !changed(t);
   playButton.disabled = !t || !scene || busy || localPlaying;
   $<HTMLButtonElement>("#fullscreen").disabled = !t || busy;
@@ -201,9 +209,10 @@ function updateControls() {
   $("#launch-target").title =
     t && changed(t) ? "启动将使用已保存的设置" : "播放动画并打开应用";
   for (const element of document.querySelectorAll<HTMLInputElement>(
-    "#duration, #duration-value, #reduced-motion, #show-app-icon",
+    "#duration, #duration-value, #reduced-motion, #show-app-icon, #theme-sound",
   ))
     element.disabled = !t || busy;
+  $<HTMLInputElement>("#theme-sound").disabled = !t || busy || settings.reducedMotion;
   for (const element of document.querySelectorAll<HTMLButtonElement>(
     ".theme-card, .app-identity, .remove-app",
   ))
@@ -253,13 +262,28 @@ function updateSelection() {
     card.classList.toggle("selected", selected);
     card.setAttribute("aria-pressed", String(selected));
   }
+  carousel.center(d.theme);
   $<HTMLInputElement>("#duration").value = String(d.duration);
   $<HTMLInputElement>("#duration-value").value = (d.duration / 1000).toFixed(1);
   $<HTMLInputElement>("#reduced-motion").checked = d.reducedMotion;
   $<HTMLInputElement>("#show-app-icon").checked = d.showAppIcon;
+  $<HTMLInputElement>("#theme-sound").checked = !!d.playThemeSound;
   $("#time-label").textContent = `${(d.duration / 1000).toFixed(1)} 秒`;
   stopPreview();
-  scene?.setTheme(d.theme);
+  if (t && !scene) {
+    try {
+      scene = new MotionScene(stage, d.theme);
+      stage.classList.remove("fallback-stage");
+      playback = new LaunchPlayback(scene, emblem);
+      resetEmblem();
+    } catch {
+      stage.classList.add("fallback-stage");
+      toast("此设备暂无法绘制动态预览；启动时将使用简短淡入。", true);
+    }
+  } else if (!t && scene) {
+    scene.dispose(); scene = null;
+    playback = new LaunchPlayback(null, emblem);
+  } else scene?.setTheme(d.theme);
   renderTargets();
 }
 function selectTarget(id: string) {
@@ -273,6 +297,7 @@ function showWorkspace() {
   $("#general-settings").hidden = true;
   $(".workspace").classList.remove("show-settings");
   $("#nav-settings").setAttribute("aria-current", "false");
+  $(".titlebar span").textContent = "Openlude";
   $("#settings").hidden = !target();
 }
 function showSettings() {
@@ -285,6 +310,7 @@ function showSettings() {
   $("#general-settings").hidden = false;
   $(".workspace").classList.add("show-settings");
   $("#nav-settings").setAttribute("aria-current", "page");
+  $(".titlebar span").textContent = "Openlude · 设置";
   $("#general-settings-title").focus();
 }
 async function nativeAction(
@@ -309,14 +335,23 @@ async function addApplication() {
   selectTarget(next.targets.at(-1)!.id);
   toast("应用已添加");
 }
+function selectTheme(theme: ThemeId) {
+  if (nativeBusy || saving || !target()) return;
+  draft().theme = theme;
+  updateSelection();
+}
+const carousel = new ThemeCarousel($(".theme-grid"), selectTheme);
 $(".theme-grid").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
     "[data-theme]",
   );
   if (!button || nativeBusy || saving) return;
-  draft().theme = button.dataset.theme as ThemeId;
-  updateSelection();
+  selectTheme(button.dataset.theme as ThemeId);
 });
+for (const [id, direction] of [["previous-themes", -1], ["next-themes", 1]] as const)
+  $(`#${id}`).addEventListener("click", () => {
+    carousel.step(direction);
+  });
 $("#app-search").addEventListener("input", renderTargets);
 $("#application-list").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
@@ -352,6 +387,7 @@ applyButton.addEventListener("click", () => {
         duration: d.duration,
         reducedMotion: d.reducedMotion,
         showAppIcon: d.showAppIcon,
+        playThemeSound: !!d.playThemeSound,
       });
       drafts.delete(id);
       updateSelection();
@@ -396,6 +432,7 @@ $("#fullscreen").addEventListener("click", () => {
         duration: d.duration,
         reducedMotion: d.reducedMotion,
         showAppIcon: d.showAppIcon,
+        playThemeSound: !!d.playThemeSound,
       }),
     ),
   );
@@ -426,6 +463,11 @@ $("#show-app-icon").addEventListener("change", (event) => {
   stopPreview();
   renderTargets();
 });
+$("#theme-sound").addEventListener("change", (event) => {
+  draft().playThemeSound = (event.target as HTMLInputElement).checked;
+  stopPreview();
+  renderTargets();
+});
 const help = $<HTMLDialogElement>("#help");
 $("#close-help").addEventListener("click", () => help.close());
 $("#help-done").addEventListener("click", () => help.close());
@@ -438,6 +480,7 @@ document.addEventListener("keydown", (event) => {
 });
 window.addEventListener("beforeunload", () => {
   playback?.stop();
+  carousel.dispose();
   scene?.dispose();
 });
 
@@ -446,12 +489,6 @@ try {
   document.documentElement.dataset.platform = state.platform;
   initializeSettings(state.settings, state.versionName, showSettings);
   $("#back-to-workspace").addEventListener("click", showWorkspace);
-  try {
-    scene = new MotionScene(stage);
-  } catch {
-    stage.classList.add("fallback-stage");
-    toast("此设备暂无法绘制动态预览；启动时将使用简短淡入。", true);
-  }
   playback = new LaunchPlayback(scene, emblem);
   selectTarget(state.targets[0]?.id ?? "");
 } catch (error) {

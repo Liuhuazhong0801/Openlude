@@ -34,17 +34,26 @@ export class LaunchPlayback {
     const start = performance.now();
     const total = animationDuration(effective);
     let revealing = false;
+    let started = false;
+    let staticFrameDrawn = false;
     return new Promise((resolve) => {
       this.resolvePlay = resolve;
       const tick = (now: number) => {
         const elapsed = Math.max(0, now - start);
         const phase = animationFrame(elapsed, effective);
+        if (!started && phase.sceneOpacity > 0) {
+          started = true;
+          this.scene?.beginPlayback(effective);
+        }
         this.emblem.style.opacity = String(phase.iconOpacity);
         this.emblem.parentElement?.style.setProperty("--scene-opacity", String(phase.sceneOpacity));
         this.scene?.setOpacity(
           phase.sceneOpacity * (options.nativeWindow ? 1 : phase.coverOpacity),
         );
-        this.scene?.render(settings.reducedMotion ? 0.7 : phase.motionProgress);
+        if (phase.sceneOpacity > 0 && (!settings.reducedMotion || !staticFrameDrawn)) {
+          this.scene?.render(settings.reducedMotion ? 0.7 : phase.motionProgress);
+          staticFrameDrawn = true;
+        }
         options.onProgress?.(Math.min(1, elapsed / total));
         if (!revealing && elapsed >= Math.max(0, phase.revealAt - (options.revealLead ?? 0))) {
           revealing = true;
@@ -55,6 +64,7 @@ export class LaunchPlayback {
           this.frame = requestAnimationFrame(tick);
         else {
           this.frame = 0;
+          this.scene?.stopPlayback();
           this.resolvePlay = undefined;
           resolve();
         }
@@ -66,6 +76,7 @@ export class LaunchPlayback {
   stop() {
     ++this.generation;
     cancelAnimationFrame(this.frame);
+    this.scene?.stopPlayback();
     this.frame = 0;
     this.resolvePlay?.();
     this.resolvePlay = undefined;

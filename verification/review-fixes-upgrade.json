@@ -1,0 +1,13 @@
+{
+  "version": "0.6.1",
+  "settingsUnchanged": true,
+  "settingsSha256Before": "6d3baf6a9f18c6c0e64c1337f0a508d0e18fef37c6a874a5b55be6c607337a7a",
+  "settingsSha256After": "6d3baf6a9f18c6c0e64c1337f0a508d0e18fef37c6a874a5b55be6c607337a7a",
+  "appPath": "<outputs>/openlude-v0.6.1/Openlude.app",
+  "observed": [
+    "Running app URL is inside openlude-v0.6.1 output directory",
+    "Settings page displays Openlude 0.6.1",
+    "Latest ChatGPT comic and WeChat frog bindings both remain present",
+    "Returned to workspace with the saved ChatGPT comic selection and Save disabled"
+  ]
+}

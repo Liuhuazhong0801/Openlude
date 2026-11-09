@@ -1,0 +1,35 @@
+{
+  "version": "0.6.0",
+  "variant": "Single Feidudu character; original online footage",
+  "verifiedOn": "macOS arm64",
+  "unitTests": 13,
+  "checks": {
+    "desktop-story.json": 49,
+    "preview-story.json": 14,
+    "external-story-packaged.json": 10,
+    "packaged-story.json": 7
+  },
+  "latestUserSettingsByteForByteUnchanged": true,
+  "restoredCurrentBinding": {
+    "theme": "frog",
+    "preferences": {
+      "duration": 3000,
+      "reducedMotion": false,
+      "showAppIcon": false,
+      "playThemeSound": true
+    }
+  },
+  "nativeUIObserved": [
+    "Original frog video plays in the app",
+    "Single original kangaroo dances in the app; 4 second duration; source audio switch present",
+    "Saved frog binding and user-enabled original audio restored without writing settings"
+  ],
+  "feiduduSource": "https://naiwahub.com/zh/memes/dot-feidudu-6ff4cdcdb0a1",
+  "feiduduAssetSha256": "d32272927e9e0ebfa36a5b3070f7406483366cb295828ea50b47de4487f099a4",
+  "gitHubSync": false,
+  "limitations": [
+    "Windows native playback is pending device validation",
+    "Local macOS build uses ad-hoc signing; no notarization or updater publication performed"
+  ],
+  "files": {}
+}

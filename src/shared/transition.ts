@@ -1,15 +1,21 @@
 /** Keep the reveal inside the selected animation duration. */
 import type { Preferences, ThemeId } from "./types";
 
-export const MAPLE_MOTION_DURATION = 4000;
 export const ICON_INTRO_DURATION = 900;
+export const THEME_MOTION_DURATIONS: Partial<Record<ThemeId, number>> = {
+  comic: 3200,
+  anime: 4000,
+  frog: 4200,
+  feidudu: 4000,
+};
 
 /** The image-based theme has its own motion length; retain the user's other timing. */
 export function playbackPreferences(theme: ThemeId, settings: Preferences): Preferences {
-  if (theme !== "maple" || settings.reducedMotion) return settings;
+  const duration = THEME_MOTION_DURATIONS[theme];
+  if (!duration || settings.reducedMotion) return settings;
   return {
     ...settings,
-    duration: MAPLE_MOTION_DURATION + (settings.showAppIcon ? ICON_INTRO_DURATION : 0),
+    duration: duration + (settings.showAppIcon ? ICON_INTRO_DURATION : 0),
   };
 }
 

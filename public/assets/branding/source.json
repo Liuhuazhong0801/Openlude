@@ -1,0 +1,15 @@
+{
+  "product": "Openlude",
+  "concept": "Silver fox mascot",
+  "status": "selected-by-user",
+  "generation": "built-in image_gen",
+  "file": "app-icon.png",
+  "width": 1254,
+  "height": 1254,
+  "bit_depth": 8,
+  "color_type": 6,
+  "bytes": 1679922,
+  "sha256": "0aa2064beb97a055d09a86b436a770163b7ae26fce015d8a42f5e81cbd288ad7",
+  "prompt_file": "prompt.txt",
+  "sourceThread": "01a1aedf-2128-7413-ab8c-600476711914"
+}

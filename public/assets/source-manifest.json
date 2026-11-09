@@ -1,13 +1,17 @@
 {
   "project": "Openlude",
   "scope": "多主题桌面应用启动动画视觉素材",
-  "generationMode": "built-in image_gen",
+  "generationMode": "Built-in image_gen for illustrated scenes, real-time WebGL, and original meme footage (no character redraw)",
   "createdAt": "2026-11-06",
-  "assetStatus": "前五个主题使用生成式缩略图与程序化动效；赤枫剑影使用用户原图和实时动态图层。",
+  "assetStatus": "0.6.2: 八个主题；列车改为完整车厢圆角窗、玻璃雨滴、窗沿和窗外分层视差。",
   "branding": {
     "file": "branding/app-icon.png",
-    "promptKey": "icon_universal",
-    "usage": "工具自身的通用图标候选，以三层窗口展开表达启动和动效。"
+    "sourceRecord": "branding/source.json",
+    "promptFile": "branding/prompt.txt",
+    "macOS": "branding/app-icon.icns",
+    "windows": "branding/app-icon.ico",
+    "tray": "branding/trayTemplate.svg",
+    "usage": "用户在设计对话中选定的小银狐图标；仅用于 Openlude 自身。"
   },
   "alternates": [
     {
@@ -18,67 +22,67 @@
   ],
   "themes": [
     {
-      "id": "portal",
-      "name": "光环穿梭",
-      "file": "themes/portal.png",
-      "promptKey": "tunnel",
-      "appearance": "dark",
-      "foreground": "#F3F5F7",
-      "motionDirection": "多层窗口由远及近穿梭，中央应用图标淡入。",
-      "durationSuggestionMs": 1400,
-      "palette": [
-        "#10171C",
-        "#D7DEE4",
-        "#75E0D0"
-      ]
+      "id": "comic",
+      "name": "漫画疾速",
+      "file": "themes/comic.png",
+      "sourceRecord": "themes/illustration-prompts.json",
+      "durationMs": 3200,
+      "thumbnail": "themes/thumbnails/comic.webp"
     },
     {
-      "id": "aurora",
-      "name": "极光流体",
-      "file": "themes/aurora.png",
-      "promptKey": "aurora",
-      "appearance": "dark",
-      "foreground": "#F4F6FA",
-      "motionDirection": "柔光丝带沿边缘流动，光泽经过后显露中央图标。",
-      "durationSuggestionMs": 1200,
-      "palette": [
-        "#071224",
-        "#4DE0C6",
-        "#F3A6B6",
-        "#F8DFB8"
-      ]
+      "id": "anime",
+      "name": "晴空来信",
+      "file": "themes/anime.png",
+      "sourceRecord": "themes/illustration-prompts.json",
+      "durationMs": 4000,
+      "thumbnail": "themes/thumbnails/anime.webp"
+    },
+    {
+      "id": "portal",
+      "name": "星海列车",
+      "file": "themes/portal.png",
+      "artwork": "themes/night-train.png",
+      "sourceRecord": "themes/story-prompts.json",
+      "thumbnailSource": "Capture of the actual 0.6.2 carriage-window renderer",
+      "savedBindingCompatibility": "Existing ID retained; new scene replaces previous artwork",
+      "thumbnail": "themes/thumbnails/portal.webp",
+      "motionDirection": "固定立体圆角窗框与木质窗沿；窗外城市分层视差、玻璃反光与雨滴"
     },
     {
       "id": "paper",
-      "name": "几何折叠",
+      "name": "纸鹤山海",
       "file": "themes/paper.png",
-      "promptKey": "paper",
       "appearance": "light",
       "foreground": "#28313D",
-      "motionDirection": "纸片向四周展开，轻微回弹后显露中央图标。",
+      "motionDirection": "纸雕背景景深、立体纸鹤振翅、水面流光、独立前景花瓣",
       "durationSuggestionMs": 1100,
       "palette": [
         "#F3F0E8",
         "#325CE8",
         "#E2785D",
         "#F7E6A4"
-      ]
+      ],
+      "thumbnailSource": "Capture of the 0.4.1 real-time renderer",
+      "sourceRecord": "themes/refinement-prompts.json",
+      "artwork": "themes/paper-world.png",
+      "thumbnail": "themes/thumbnails/paper.webp"
     },
     {
       "id": "pixel",
-      "name": "像素聚合",
+      "name": "像素星航",
       "file": "themes/pixel.png",
-      "promptKey": "pixel",
       "appearance": "dark",
       "foreground": "#F2F5FF",
-      "motionDirection": "方块分组聚合形成窗口轮廓，中央图标清晰出现。",
+      "motionDirection": "飞船穿过星云、行星与远方城市",
       "durationSuggestionMs": 1000,
       "palette": [
         "#0D1428",
         "#3C62FE",
         "#FFB44C",
         "#E6EBFF"
-      ]
+      ],
+      "thumbnailSource": "Capture of the 0.4.0 real-time renderer",
+      "thumbnail": "themes/thumbnails/pixel.webp"
     },
     {
       "id": "ink",
@@ -93,24 +97,45 @@
         "#F2EFE7",
         "#25292B",
         "#A9AAA5"
-      ]
+      ],
+      "thumbnail": "themes/thumbnails/ink.webp"
     },
     {
-      "id": "maple",
-      "name": "赤枫剑影",
-      "file": "themes/maple.jpg",
-      "sourceRecord": "themes/maple.source.json",
+      "id": "frog",
+      "name": "奶蛙大笑",
+      "file": "themes/frog.png",
+      "video": "themes/originals/frog.mp4",
+      "durationMs": 4200,
+      "sourceRecord": "themes/originals/sources.json",
+      "originalAudio": true,
+      "audioDefault": "muted",
+      "thumbnail": "themes/thumbnails/frog.webp"
+    },
+    {
+      "id": "feidudu",
+      "name": "肥嘟嘟",
+      "file": "themes/feidudu.png",
+      "video": "themes/originals/feidudu.mp4",
       "durationMs": 4000,
-      "motionDirection": "镜头推进、远近落叶与景深；保留原画人物姿态。"
+      "sourceRecord": "themes/originals/sources.json",
+      "originalAudio": true,
+      "audioDefault": "muted",
+      "thumbnail": "themes/thumbnails/feidudu.webp"
     }
   ],
   "usageNotes": [
-    "主题可绑定到任意应用，不与 Codex、WorkBuddy、DeepSeek 或豆包一一固定配对。",
-    "应用名称、图标、状态文字由运行时叠加，生成的主题图片没有内嵌文案或第三方品牌。",
-    "五张主题图是合成背景和风格关键帧，没有独立的纸片、流体、粒子或窗口图层。",
-    "可直接用于主题缩略图、静态启动背景和简单淡入淡出。独立形变、折叠、聚合等效果需要后续通过渲染器或拆分素材实现。",
-    "时长为后续动画设计建议，不代表已经生成了相应时长的视频。",
-    "像素尺寸和透明度以 asset-metadata.json 的实测值为准。",
-    "通用图标与早期备选保留真实透明外缘，后续桌面图标封装需输出对应平台格式。"
-  ]
+    "主题可绑定任意用户添加的本机应用。",
+    "图标开场与主题运动分阶段播放；尾段通过原生窗口透明度显露目标应用。",
+    "漫画与日漫插画由内置 image_gen 生成，实际尺寸及完整提示词见 illustration-prompts.json。",
+    "素材中的人物为静态原画；漫画通过分镜切换呈现运动节奏，没有生成人物逐帧动作。",
+    "星海列车窗外原画由内置 image_gen 生成；完整提示词、实际尺寸和校验值见 story-prompts.json。",
+    "奶蛙与肥嘟嘟直接播放原始互联网素材，保持角色与动作；未采用 AI 重绘的替代形象。来源及处理记录见 themes/originals/sources.json。",
+    "两项主题均保留原声音轨，按应用单独启用，默认静音；肥嘟嘟采用用户指定的单只袋鼠版本。"
+  ],
+  "thumbnailManifest": "themes/thumbnails/manifest.json",
+  "retiredThemeCompatibility": {
+    "aurora": "portal",
+    "maple": "portal",
+    "behavior": "Only retired saved theme IDs are migrated; app paths and preferences are retained and the original configuration is backed up."
+  }
 }

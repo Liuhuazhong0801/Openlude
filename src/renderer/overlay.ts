@@ -26,8 +26,7 @@ if (payload) {
       .catch(() => {});
   }
   try {
-    scene = new MotionScene(host);
-    scene.setTheme(payload.theme);
+    scene = new MotionScene(host, payload.theme);
     await scene.preparePlayback();
     scene.render(0);
   } catch {

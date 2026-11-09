@@ -1,0 +1,11 @@
+{
+  "version": "0.6.2",
+  "settingsUnchanged": true,
+  "settingsSha256": "6d3baf6a9f18c6c0e64c1337f0a508d0e18fef37c6a874a5b55be6c607337a7a",
+  "observed": [
+    "Opened app URL inside openlude-v0.6.2",
+    "Theme list has eight entries and no cat or ocean",
+    "Played the new train window view in the actual delivered app",
+    "Restored the saved comic selection; Save disabled; no settings saved by the agent"
+  ]
+}

@@ -2,6 +2,7 @@ node_modules/
 dist-preview/
 dist-electron/
 dist-renderer/
+dist-native/
 release/
 test-results/
 .DS_Store

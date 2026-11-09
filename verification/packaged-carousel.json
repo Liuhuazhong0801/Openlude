@@ -1,0 +1,18 @@
+{
+  "version": "0.5.0",
+  "checks": [
+    "Packaged carousel centers the selected theme with no scrollbar, wraps and responds to horizontal wheel input",
+    "The selected theme stays centered after resizing to the minimum window",
+    "The signed packaged native observer reaches ready status"
+  ],
+  "errors": [],
+  "clipSeconds": 5.794,
+  "actualUserApp": {
+    "openedVersion": "0.5.0",
+    "themeCenteredWithoutScrollbar": true,
+    "originalBindingRestored": "comic",
+    "savedConfigurationUnchanged": true,
+    "systemLaunchAnimationEnabled": true,
+    "leftOpenOn": "通用"
+  }
+}

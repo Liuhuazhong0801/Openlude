@@ -1,0 +1,8 @@
+
+> openlude@0.6.1 test:windows-observer
+> node scripts/windows-observer-smoke.mjs
+
+PASS A single configure message gets ready without a second stdin write
+PASS The loop remains responsive to later configuration messages
+PASS Closing stdin exits cleanly without a blocked reader keeping the process alive
+{"platform":"darwin","protocolOnly":true,"checks":3}

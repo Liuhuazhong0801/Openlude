@@ -2,7 +2,7 @@ import "./preview.css";
 import { MotionScene } from "./motion";
 import { LaunchPlayback } from "./playback";
 import { animationDuration, playbackPreferences } from "../shared/transition";
-import { THEMES, type ThemeId } from "../shared/types";
+import { THEMES, themeHasSound, type ThemeId } from "../shared/types";
 
 const stage = document.querySelector<HTMLElement>("#demo-stage")!;
 const emblem = document.querySelector<HTMLElement>(".app-emblem")!;
@@ -11,6 +11,7 @@ const loop = document.querySelector<HTMLInputElement>("#demo-loop")!;
 const progress = document.querySelector<HTMLElement>("#demo-progress")!;
 const appPicker = document.querySelector<HTMLSelectElement>("#demo-app")!;
 const showIcon = document.querySelector<HTMLInputElement>("#demo-icon")!;
+const sound = document.querySelector<HTMLInputElement>("#demo-sound")!;
 function selectApplication() {
   const option = appPicker.selectedOptions[0];
   const image = document.querySelector<HTMLImageElement>("#demo-app-icon")!;
@@ -40,7 +41,7 @@ function play() {
   document.querySelector("#demo-duration")!.textContent = `${(animationDuration(playbackPreferences(currentTheme, { duration: 2600, reducedMotion: false, showAppIcon: showIcon.checked })) / 1000).toFixed(1)} 秒`;
   const token = ++generation;
   void playback
-    .play({ duration: 2600, reducedMotion: false, showAppIcon: showIcon.checked }, {
+    .play({ duration: 2600, reducedMotion: false, showAppIcon: showIcon.checked, playThemeSound: sound.checked }, {
       onProgress: (p) => { progress.style.width = `${p * 100}%`; },
     })
     .then(() => {
@@ -53,7 +54,9 @@ function play() {
 function select(theme: ThemeId) {
   currentTheme = theme;
   const item = THEMES.find((t) => t.id === theme)!;
+  playback.stop();
   scene.setTheme(theme);
+  sound.parentElement!.hidden = !themeHasSound(theme);
   picker
     .querySelectorAll<HTMLButtonElement>("button")
     .forEach((b) =>
@@ -74,6 +77,7 @@ try {
   });
   document.querySelector("#demo-play")!.addEventListener("click", play);
   showIcon.addEventListener("change", play);
+  sound.addEventListener("change", play);
   appPicker.addEventListener("change", () => {
     selectApplication();
     play();

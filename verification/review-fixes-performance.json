@@ -1,0 +1,52 @@
+{
+  "machine": "Apple M4 / ANGLE Metal / headless Chrome",
+  "viewport": [
+    2560,
+    1440
+  ],
+  "deviceScaleFactor": 2,
+  "bufferBefore": [
+    5120,
+    2880
+  ],
+  "bufferAfter": [
+    2560,
+    1440
+  ],
+  "metric": "Median requestAnimationFrame interval, 46 post-warmup samples per theme; short local sample, not a device guarantee",
+  "themes": [
+    {
+      "id": "portal",
+      "beforeMs": 33.399999999999864,
+      "afterMs": 16.699999999999932
+    },
+    {
+      "id": "aurora",
+      "beforeMs": 50,
+      "afterMs": 16.699999999999818
+    },
+    {
+      "id": "anime",
+      "beforeMs": 50,
+      "afterMs": 16.699999999999818
+    },
+    {
+      "id": "paper",
+      "beforeMs": 49.900000000001455,
+      "afterMs": 16.699999999999818
+    },
+    {
+      "id": "ink",
+      "beforeMs": 16.69999999999891,
+      "afterMs": 16.699999999999818
+    }
+  ],
+  "originalThumbnailBytes": 19466585,
+  "optimizedThumbnailBytes": 93866,
+  "thumbnailBytesReductionPercent": 99.52,
+  "limits": [
+    "Animation canvas is scaled to at most a QHD pixel budget on larger displays",
+    "Text and target-app icons stay at native resolution",
+    "Full original animation artwork and video files remain unchanged"
+  ]
+}

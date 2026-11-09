@@ -1,23 +1,28 @@
 {
   "name": "openlude",
   "productName": "Openlude",
-  "version": "0.3.0",
+  "version": "0.6.2",
   "private": true,
   "description": "A desktop launcher with procedural launch animations",
   "author": "Openlude",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.renderer.json && tsc --noEmit -p tsconfig.main.json",
-    "build": "npm run typecheck && tsc -p tsconfig.main.json && vite build",
+    "build": "npm run typecheck && node scripts/build-native.mjs && tsc -p tsconfig.main.json && vite build",
     "start": "electron .",
     "dev": "npm run build && electron .",
-    "test": "node --test dist-electron/main/model.test.js",
+    "test": "node --test \"dist-electron/main/*.test.js\" scripts/pack-release.test.mjs",
     "test:desktop": "node scripts/smoke.mjs",
     "build:preview": "node scripts/build-preview.mjs",
     "test:preview": "node scripts/preview-smoke.mjs",
-    "pack:mac": "npm run build && electron-builder --mac dir",
-    "pack:win": "npm run build && electron-builder --win nsis --x64",
-    "pack:release": "npm run build && electron-builder --mac dmg zip --publish never"
+    "pack:mac": "npm run build && electron-builder --mac dir --config.mac.identity=- --publish never",
+    "pack:win": "npm run build && electron-builder --win nsis --x64 --publish never",
+    "pack:preview": "node scripts/pack-preview.mjs",
+    "pack:release": "npm run build && node scripts/pack-release.mjs",
+    "test:external": "node scripts/external-launch-smoke.mjs",
+    "test:windows-observer": "node scripts/windows-observer-smoke.mjs",
+    "test:regressions": "node scripts/regression-smoke.mjs",
+    "assets:thumbnails": "node scripts/build-thumbnails.mjs"
   },
   "dependencies": {
     "electron-updater": "6.8.11",
@@ -51,14 +56,17 @@
         "dmg",
         "zip"
       ],
-      "icon": "public/assets/branding/app-icon.png",
-      "identity": "-"
+      "icon": "public/assets/branding/app-icon.icns",
+      "binaries": [
+        "Contents/Resources/native/launch-observer-darwin-arm64",
+        "Contents/Resources/native/launch-observer-darwin-x64"
+      ]
     },
     "win": {
       "target": [
         "nsis"
       ],
-      "icon": "public/assets/branding/app-icon.png"
+      "icon": "public/assets/branding/app-icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -67,7 +75,17 @@
     "extraResources": [
       {
         "from": "native",
-        "to": "native"
+        "to": "native",
+        "filter": [
+          "*.ps1"
+        ]
+      },
+      {
+        "from": "dist-native",
+        "to": "native",
+        "filter": [
+          "launch-observer-darwin-*"
+        ]
       }
     ],
     "publish": [
@@ -89,5 +107,8 @@
   "bugs": {
     "url": "https://github.com/Liuhuazhong0801/Openlude/issues"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "minimatch@>=7.0.0 <11.0.1": "11.0.1"
+  }
 }

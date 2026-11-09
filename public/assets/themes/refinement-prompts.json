@@ -1,0 +1,26 @@
+{
+  "generator": "built-in image_gen",
+  "createdAt": "2026-11-06",
+  "assets": [
+    {
+      "key": "aurora-silk",
+      "prompt": "Use case: texture and cinematic motion design. Create one exquisitely detailed original wide 16:9 still for a premium animated desktop launch sequence titled Aurora. Extreme macro of enormous translucent iridescent liquid-silk ribbons sweeping diagonally from lower left toward upper right, layered S-curves and folds, occupying the entire frame and extending beyond all four edges. Rich obsidian midnight-blue negative space between the broad fabric forms, about 35 percent dark area, no closed ring and no centered object. Spectral mint, petrol teal, pale rose, warm champagne, ultraviolet blue seen through delicate thin-film interference. Fine parallel thread-like highlights follow the flowing folds; physically plausible translucent glass-satin material, crisp milky specular crests, dark glossy valleys, subtle crystalline grain, exquisite depth and overlapping surfaces. Cinematic studio rim lighting, sophisticated color harmony, selective soft focus in the deepest layers, no overblown whites. The result should feel like a luxury motion graphics film frame, tactile and optically rich. Strong fluid diagonal movement, beautiful full-screen composition. No text, typography, interface, logo, watermark, rectangular border, stars, planets, butterfly, human, scenery, extra symbols, or neon ring. Landscape 3840x2160 composition; maximum useful detail.",
+      "file": "aurora-silk.png",
+      "dimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sha256": "3772d2a08c76a3ebd90b20ecd24c7bf3e8b9c80e45f1df5bb018f2943e578c5a"
+    },
+    {
+      "key": "paper-world",
+      "prompt": "Use case: illustration-story. Create a stunning original 16:9 panoramic miniature diorama built ENTIRELY from hand-cut folded paper, for an animated Japanese paper-crane launch sequence. View through a lush mountain valley toward the distant warm morning sun: intricate layers of tall jade, indigo and soft teal mountains with thin gold-foil ridgelines, winding pale turquoise river and delicate terraced paper waves in the lower center, a small vermilion arched bridge in the middle distance, exquisitely cut maple and cherry trees framing the left and right foreground, pale coral blossoms and golden foliage, tiny traditional roof shapes far away, sculptural cream paper clouds suspended between mountain layers, a calm warm ivory sky. Beautiful craftsmanship, hundreds of fine cut-paper edges, visible layered thickness, real fiber texture, crisp directional shadows and warm grazing light. Rich but restrained Japanese washi paper palette: deep peacock teal, jade, coral red, cream and matte antique gold. Fully immersive edge-to-edge scene, NOT a flat vector landscape and NOT simple wavy hills. Camera at low aerial angle, magical generous depth, wide open air corridor through center for separately animated cranes. Detailed foreground at bottom and edges, mountains occupy lower 65 percent, sky upper 35 percent. No birds or paper cranes (these are added in real-time), no people, text, letters, logo, watermark, UI, frame or border. Beautiful high-end stop-motion film concept painting with tangible handmade paper material. Landscape 3840x2160 composition, maximum detail.",
+      "file": "paper-world.png",
+      "dimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sha256": "7487e12fd5a567cf9ec091127836343faa8a0860ee66b0396a308ee2c7ae0e19"
+    }
+  ]
+}

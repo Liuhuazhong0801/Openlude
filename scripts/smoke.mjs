@@ -33,10 +33,10 @@ async function until(fn, timeout = 8000) {
   }
   throw new Error("Timed out waiting for test condition");
 }
-async function boot() {
+async function boot(background = false) {
   await fs.mkdir(path.join(run, "state"), { recursive: true });
   const application = await electron.launch({
-    args: [root],
+    args: [root, ...(background ? ["--background"] : [])],
     cwd: root,
     env: { ...process.env, OPENLUDE_TEST_DATA: path.join(run, "state") },
     timeout: 30000,
@@ -47,6 +47,7 @@ async function boot() {
   });
   desktop = application;
   application.on("window", (page) => {
+    void application.evaluate(({webContents}) => { webContents.getAllWebContents().forEach(w => w.setAudioMuted(true)); });
     page.on("pageerror", (e) => errors.push(e.message));
     page.on("console", (msg) => {
       if (msg.type() === "error") errors.push(msg.text());
@@ -63,8 +64,34 @@ async function boot() {
     console.log("BOOT URL", page.url());
     throw error;
   }
-  await page.waitForSelector("canvas.motion-canvas", { state: "attached" });
+  const bootState = await page.evaluate(() => window.openlude.state());
+  if (bootState.targets.length) await page.waitForSelector("canvas.motion-canvas", { state: "attached" });
+  else assert.equal(await page.locator("canvas.motion-canvas").count(), 0);
+  if (background) {
+    await delay(500);
+    assert.equal(await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
+    await application.evaluate(({ app }) => app.emit("activate"));
+    await until(async () => application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()));
+    check("Background launch keeps the workbench hidden and activation restores it");
+  }
   return { application, page };
+}
+async function selectTheme(page, theme) {
+  const card = page.locator(`.theme-card[data-theme="${theme}"]`);
+  for (let tries = 0; tries < 10; tries++) {
+    const offset = Number(await card.getAttribute("data-offset"));
+    if (Math.abs(offset) <= 1) { await card.click(); await page.waitForFunction(theme => document.querySelector(`.theme-card[data-theme="${theme}"] img`)?.naturalWidth === 256, theme); return; }
+    await page.locator(offset > 0 ? "#next-themes" : "#previous-themes").click();
+  }
+  throw new Error("Could not navigate to theme " + theme);
+}
+async function assertCentered(page) {
+  await page.waitForFunction(() => {
+    const row = document.querySelector('.theme-grid').getBoundingClientRect();
+    const card = document.querySelector('.theme-card.selected').getBoundingClientRect();
+    return Math.abs(card.x + card.width / 2 - row.x - row.width / 2) < 1;
+  });
+  assert.equal(await page.locator('.theme-grid').evaluate(el => getComputedStyle(el).overflowX), 'clip');
 }
 async function fixture() {
   const bundle = path.join(run, "Openlude Launch Fixture.app");
@@ -183,6 +210,13 @@ try {
   const first = await boot();
   desktop = first.application;
   await traceReveals();
+  await desktop.evaluate(({ Tray }) => {
+    const original = Tray.prototype.setContextMenu;
+    Tray.prototype.setContextMenu = function(menu) {
+      globalThis.testTrayMenu = menu;
+      return original.call(this, menu);
+    };
+  });
   let page = first.page;
   assert.deepEqual((await page.evaluate(() => window.openlude.state())).targets, []);
   assert.equal(await page.locator(".app-card").count(), 0);
@@ -208,11 +242,19 @@ try {
     await page.locator(index === 0 ? "#add-first-app" : "#add-app").click();
     await until(async () => (await page.locator(".app-card").count()) === index + 1);
   }
+  await assertCentered(page);
+  await selectTheme(page, "comic"); await assertCentered(page);
+  await page.locator("#previous-themes").click(); await assertCentered(page);
+  assert.equal(await page.locator('.theme-card.selected').getAttribute('data-theme'), 'feidudu');
+  await page.locator('.theme-card.selected').focus(); await page.locator('.theme-card.selected').press('ArrowRight'); await assertCentered(page);
+  assert.equal(await page.locator('.theme-card.selected').getAttribute('data-theme'), 'comic');
+  await selectTheme(page, "portal"); await assertCentered(page);
+  check("Theme carousel hides the scrollbar, centers first/middle/last choices, wraps and supports arrow keys");
   const initial = await page.evaluate(() => window.openlude.state());
   const primary = initial.targets[0];
   const secondary = initial.targets[1];
   await page.locator(`[data-id="${primary.id}"] [data-action="select"]`).click();
-  assert.equal(await page.locator(".theme-card").count(), 6);
+  assert.equal(await page.locator(".theme-card").count(), 8);
   assert.equal(await page.locator(".fallback-stage").count(), 0);
   assert.equal(await page.locator("#empty-workspace").isHidden(), true);
   assert.equal(await page.locator("#locate-target, .launch-button, [data-action=launch], #launch-target svg").count(), 0);
@@ -234,16 +276,31 @@ try {
   assert.equal(await page.locator("dialog#general-settings").count(), 0);
   assert.equal(await page.locator(".content").isHidden(), true);
   assert.equal(await page.locator("#settings").isHidden(), true);
+  assert.equal(await page.locator(".workspace > .sidebar").isHidden(), true);
+  assert.deepEqual(await page.locator(".settings-tab").allTextContents(), ["通用", "外观", "更新", "关于"]);
+  assert.equal(await page.locator("#settings-panel-general").isVisible(), true);
+  await page.locator("#settings-tab-appearance").click();
   assert.equal(await page.locator("#appearance").inputValue(), "system");
   await page.locator("#appearance").selectOption("dark");
   await page.waitForFunction(() => matchMedia("(prefers-color-scheme: dark)").matches);
+  await page.locator("#settings-tab-general").click();
   await page.screenshot({ path: path.join(run, "settings-dark.png") });
+  await page.locator("#settings-tab-appearance").click();
   await page.locator("#appearance").selectOption("light");
   await page.waitForFunction(() => !matchMedia("(prefers-color-scheme: dark)").matches);
+  await page.locator("#settings-tab-general").click();
   await page.screenshot({ path: path.join(run, "settings-light.png") });
+  await page.locator("#settings-tab-appearance").click();
   await page.locator("#appearance").selectOption("system");
   await until(async () => (await desktop.evaluate(({ nativeTheme }) => nativeTheme.themeSource)) === "system");
   check("Bottom-left settings open a full page, switch light/dark immediately and restore follow-system mode");
+  await page.locator("#settings-tab-general").click();
+  assert.equal(await page.locator("#animate-external-launches").isChecked(), true);
+  await page.locator("#settings-tab-general").press("End");
+  assert.equal(await page.locator("#settings-panel-about").isVisible(), true);
+  await page.locator("#settings-tab-about").press("Home");
+  assert.equal(await page.locator("#settings-panel-general").isVisible(), true);
+  check("Settings restore four dedicated sidebar categories and keyboard navigation");
   // Validate native login-item calls without modifying the developer's real login items.
   await desktop.evaluate(({ app, net }) => {
     globalThis.originalSetLogin = app.setLoginItemSettings;
@@ -254,9 +311,17 @@ try {
   });
   await page.locator("#auto-start").check();
   await until(async () => (await page.evaluate(() => window.openlude.state())).settings.autoStart);
+  await page.locator("#start-in-background").uncheck();
+  await until(async () => !(await page.evaluate(() => window.openlude.state())).settings.startInBackground);
+  await page.locator("#start-in-background").check();
+  await until(async () => (await page.evaluate(() => window.openlude.state())).settings.startInBackground);
   await page.locator("#auto-start").uncheck();
   await until(async () => !(await page.evaluate(() => window.openlude.state())).settings.autoStart);
-  assert.deepEqual(await desktop.evaluate(() => globalThis.loginRequests.map(r => r.openAtLogin)), [true, false]);
+  assert.deepEqual(await desktop.evaluate(() => globalThis.loginRequests.map(r => r.openAtLogin)), [true, true, true, false]);
+  if (process.platform === "win32")
+    assert.deepEqual(await desktop.evaluate(() => globalThis.loginRequests.map(r => r.args)), [["--background"], [], ["--background"], ["--background"]]);
+  assert.equal(await page.locator("#start-in-background").isDisabled(), true);
+  await page.locator("#settings-tab-updates").click();
   await page.locator("#auto-check-updates").uncheck();
   await until(async () => !(await page.evaluate(() => window.openlude.state())).settings.autoCheckUpdates);
   await page.locator("#check-update").click();
@@ -264,11 +329,25 @@ try {
   await desktop.evaluate(({ net }) => { net.fetch = async () => { throw new Error("offline test"); }; });
   await page.locator("#check-update").click();
   await page.waitForFunction(() => document.querySelector("#update-status").textContent.includes("无法检查更新"));
-  await desktop.evaluate(({ app, net }) => { app.setLoginItemSettings = globalThis.originalSetLogin; net.fetch = globalThis.originalFetch; });
   check("Settings persist login-item requests and auto-update preference; missing releases and offline errors are handled");
   await page.locator("#back-to-workspace").click();
   assert.equal(await page.locator("#general-settings").isHidden(), true);
   assert.equal(await page.locator(".content").isVisible(), true);
+  await selectTheme(page, "anime");
+  await assert.rejects(page.evaluate(() => window.openlude.installUpdate()));
+  await desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+  assert.equal(await desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
+  await desktop.evaluate(() => globalThis.testTrayMenu.items.find(item => item.label === "设置…").click());
+  await until(async () => desktop.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()));
+  await page.waitForSelector("#settings-panel-general:not([hidden])");
+  await desktop.evaluate(() => globalThis.testTrayMenu.items.find(item => item.label === "检查更新").click());
+  await page.waitForSelector("#settings-panel-updates:not([hidden])");
+  await page.locator("#back-to-workspace").click();
+  assert.equal(await page.locator('.theme-card[data-theme="anime"]').getAttribute("aria-pressed"), "true");
+  await selectTheme(page, "portal");
+  assert.equal(await desktop.evaluate(() => globalThis.testTrayMenu.items.find(item => item.label === "启动应用").submenu.items.length), 2);
+  check("Closing to the tray preserves animation drafts; tray actions reopen the matching settings category");
+  await desktop.evaluate(({ app, net }) => { app.setLoginItemSettings = globalThis.originalSetLogin; net.fetch = globalThis.originalFetch; });
   await desktop.evaluate(({ BrowserWindow }) =>
     BrowserWindow.getAllWindows()[0].setSize(1120, 760),
   );
@@ -326,8 +405,8 @@ try {
   assert.equal((await page.evaluate(() => window.openlude.state())).targets[0].preferences, undefined);
   await page.locator("#show-app-icon").check();
   check("App icon visibility is an independent per-app draft until saved");
-  for (const theme of ["portal", "aurora", "paper", "pixel", "ink"]) {
-    await page.locator(`.theme-card[data-theme="${theme}"]`).click();
+  for (const theme of ["comic", "anime", "portal", "paper", "pixel", "ink"]) {
+    await selectTheme(page, theme);
     await page.locator("#play").click();
     await delay(1150);
     const box = await page.locator("#preview-stage").boundingBox();
@@ -345,23 +424,97 @@ try {
       .locator("#preview-stage")
       .screenshot({ path: path.join(run, `${theme}.png`) });
     await page.waitForFunction(() => !document.querySelector("#play").disabled);
-    check(`Procedural motion changes pixels outside the logo: ${theme}`);
+    check(`Scene motion changes pixels outside the icon: ${theme}`);
   }
-  await page.locator('.theme-card[data-theme="maple"]').click();
+  await selectTheme(page, "anime");
   assert.equal(await page.locator("#duration-setting").isHidden(), true);
   assert.equal(await page.locator("#fixed-duration").isVisible(), true);
   assert.equal(await page.locator("#time-label").innerText(), "4.9 秒");
-  assert.equal(await page.locator('.theme-card[data-theme="maple"] img').evaluate(img => img.naturalWidth), 3840);
+  assert.equal(await page.locator('.theme-card[data-theme="anime"] img').evaluate(img => img.naturalWidth), 256);
   assert.equal(await page.locator("video").count(), 0);
   await page.locator("#play").click();
   await delay(1200);
-  const mapleEarly = await page.locator("#preview-stage").screenshot();
+  const animeEarly = await page.locator("#preview-stage").screenshot();
   await delay(650);
-  const mapleLate = await page.locator("#preview-stage").screenshot({ path: path.join(run, "maple.png") });
-  assert.equal(mapleEarly.equals(mapleLate), false);
-  await page.locator('.theme-card[data-theme="portal"]').click();
+  const animeLate = await page.locator("#preview-stage").screenshot({ path: path.join(run, "anime.png") });
+  assert.equal(animeEarly.equals(animeLate), false);
+  await selectTheme(page, "portal");
   assert.equal(await page.locator("#duration").inputValue(), "2600");
-  check("Maple uses the supplied 4K image with moving camera/leaves, no video, and preserves other theme durations");
+  check("Anime scenery and independent layers move without video, while other theme durations are preserved");
+  for (const [theme, duration] of [["frog", 4200], ["feidudu", 4000]]) {
+    await selectTheme(page, theme);
+    assert.equal(await page.locator("#theme-sound-setting").isVisible(), true);
+    if (theme === "frog") assert.equal(await page.locator("#theme-sound").isChecked(), false);
+    await page.locator("#show-app-icon").uncheck();
+    await page.locator("#play").click();
+    await page.waitForFunction(() => { const v=document.querySelector("video");return v && !v.paused && v.currentTime>.2; });
+    assert.equal(await page.locator("video").evaluate(v => v.muted), true);
+    const first = await page.locator("canvas").screenshot();
+    await delay(450);
+    assert.equal(first.equals(await page.locator("canvas").screenshot()), false);
+    await page.keyboard.press("Escape");
+    assert.equal(await page.locator("video").evaluate(v => v.paused && v.muted), true);
+    if (theme === "frog") {
+      await page.locator("#theme-sound").check();
+      await page.locator("#play").click();
+      await page.waitForFunction(() => {const v=document.querySelector("video");return v && !v.paused && !v.muted && v.currentTime>.2;});
+      await page.keyboard.press("Escape");
+      await page.locator("#apply").click();
+      await page.waitForFunction(() => document.querySelector("#save-status").textContent === "已保存");
+      assert.equal((await page.evaluate(() => window.openlude.state())).targets[0].preferences.playThemeSound, true);
+      await page.locator(`[data-id="${secondary.id}"] [data-action="select"]`).click();
+      await selectTheme(page, "frog");
+      assert.equal(await page.locator("#theme-sound").isChecked(), false);
+      await page.locator(`[data-id="${primary.id}"] [data-action="select"]`).click();
+      assert.equal(await page.locator("#theme-sound").isChecked(), true);
+      await page.locator("#theme-sound").uncheck();
+    }
+    const created = desktop.waitForEvent("window");
+    const playing = page.evaluate(({theme,id}) => window.openlude.preview(theme,id,{duration:1800,showAppIcon:true,reducedMotion:false,playThemeSound:true}), {theme,id:primary.id});
+    const view = await created;
+    const ended = view.waitForEvent("close");
+    await view.waitForSelector("video", {state:"attached"});
+    assert.equal((await view.evaluate(() => window.openlude.overlayPayload())).duration, duration+900);
+    await view.waitForFunction(() => {const v=document.querySelector("video");return v && !v.paused && v.currentTime>.15;});
+    assert.equal(await view.locator("video").evaluate(v => v.muted), false);
+    await view.keyboard.press("Escape");
+    await ended;
+    assert.equal((await playing).ok,true);
+    check(`Original ${theme}: source footage moves, defaults muted, audio/skip lifecycle and native playback work`);
+  }
+  await selectTheme(page, "portal");
+  await page.locator("#show-app-icon").check();
+  const illustratedFrames = [];
+  for (const [theme, duration] of [["comic", 3200], ["anime", 4000], ["portal", 3000], ["paper", 3000]]) {
+    const created = desktop.waitForEvent("window");
+    const playing = page.evaluate(({ theme, id }) => window.openlude.preview(theme, id, {
+      duration: 3000, showAppIcon: false, reducedMotion: false,
+    }), { theme, id: primary.id });
+    const view = await created;
+    const complete = view.waitForEvent("close");
+    await view.waitForFunction(() => {
+      const canvas = document.querySelector("canvas");
+      return canvas && getComputedStyle(canvas).opacity === "1";
+    });
+    assert.equal((await view.evaluate(() => window.openlude.overlayPayload())).duration, duration);
+    const first = await view.locator("canvas").screenshot();
+    const frameTimes = await view.evaluate(() => new Promise(resolve => {
+      const samples = []; const start = performance.now(); let previous = start;
+      function frame(now) {
+        samples.push(now - previous); previous = now;
+        if (now - start < 900) requestAnimationFrame(frame); else resolve(samples);
+      }
+      requestAnimationFrame(frame);
+    }));
+    const later = await view.locator("canvas").screenshot({ path: path.join(run, `${theme}-native.png`) });
+    assert.equal(first.equals(later), false);
+    const sorted = frameTimes.slice(1).sort((a, b) => a - b);
+    illustratedFrames.push({ theme, samples: sorted.length, medianMs: sorted[Math.floor(sorted.length / 2)], p95Ms: sorted[Math.floor(sorted.length * .95)] });
+    await complete;
+    assert.equal((await playing).ok, true);
+    check(`${theme}: native scene loads, independent layers move, and playback closes`);
+  }
+  await fs.writeFile(path.join(run, "illustrated-frame-times.json"), JSON.stringify(illustratedFrames, null, 2));
   const previewWindow = desktop.waitForEvent("window");
   await page.locator("#fullscreen").click();
   const overlay = await previewWindow;
@@ -409,11 +562,17 @@ try {
   assert.equal(await overlay.locator(".app-emblem").evaluate(el => getComputedStyle(el).opacity), "0");
   await overlay.screenshot({ path: path.join(run, "fullscreen-target.png") });
   check("The icon disappears before the full-screen scene fades in using unsaved settings");
-  assert.equal(overlay.isClosed(), false);
-  const closed = overlay.waitForEvent("close");
+  // Pixel capture can outlast a short preview. Test Esc on its own fresh window.
+  if (!overlay.isClosed()) await overlay.waitForEvent("close");
+  await until(() => page.locator("#fullscreen").isEnabled());
+  const escapeCreated = desktop.waitForEvent("window");
+  await page.locator("#fullscreen").click();
+  const escapeOverlay = await escapeCreated;
+  await escapeOverlay.waitForSelector("#skip");
+  const closed = escapeOverlay.waitForEvent("close");
   const escapeStart = Date.now();
   // Closing on keydown may invalidate Playwright's following keyup command.
-  await overlay.keyboard.press("Escape").catch((error) => {
+  await escapeOverlay.keyboard.press("Escape").catch((error) => {
     if (!String(error).includes("has been closed")) throw error;
   });
   await closed;
@@ -454,7 +613,7 @@ try {
     await page.locator("#duration").fill("2600");
     await page.locator("#duration").dispatchEvent("input");
     await page.locator("#reduced-motion").uncheck();
-    await page.locator('.theme-card[data-theme="portal"]').click();
+    await selectTheme(page, "portal");
     await page.locator("#apply").click();
     await until(
       async () =>
@@ -555,53 +714,53 @@ try {
       );
       check("The target is already active behind the overlay when the fade begins");
     }
-    await page.locator('.theme-card[data-theme="maple"]').click();
+    await selectTheme(page, "anime");
     await page.locator("#apply").click();
     await until(() => page.locator("#apply").isDisabled());
-    const mapleWindow = desktop.waitForEvent("window");
-    const mapleStart = Date.now();
+    const animeWindow = desktop.waitForEvent("window");
+    const animeStart = Date.now();
     await page.locator("#launch-target").click();
-    const mapleOverlay = await mapleWindow;
-    const mapleId = await desktop.evaluate(({ BrowserWindow }) =>
+    const animeOverlay = await animeWindow;
+    const animeId = await desktop.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows().find(w => w.webContents.getURL().endsWith("/overlay.html")).id);
-    const mapleEnd = mapleOverlay.waitForEvent("close", { timeout: 22000 });
-    await mapleOverlay.waitForSelector("canvas.motion-canvas");
-    const maplePayload = await mapleOverlay.evaluate(() => window.openlude.overlayPayload());
-    assert.equal(maplePayload.duration, 4900);
-    assert.equal(maplePayload.preview, false);
-    assert.equal(await mapleOverlay.locator("video").count(), 0);
-    await mapleEnd;
-    const mapleElapsed = Date.now() - mapleStart;
-    assert.ok(mapleElapsed > 4500 && mapleElapsed < 8000, `Maple launch lasted ${mapleElapsed}ms`);
-    const mapleTrace = await revealTrace(mapleId);
-    assertReveal(mapleTrace, 650);
-    assert.ok(mapleTrace.frames.early && mapleTrace.frames.late);
-    assert.notEqual(mapleTrace.frames.early, mapleTrace.frames.late);
-    await fs.writeFile(path.join(run, "maple-reveal.json"), JSON.stringify({
-      ...mapleTrace, frames: undefined, elapsed: mapleElapsed,
+    const animeEnd = animeOverlay.waitForEvent("close", { timeout: 22000 });
+    await animeOverlay.waitForSelector("canvas.motion-canvas");
+    const animePayload = await animeOverlay.evaluate(() => window.openlude.overlayPayload());
+    assert.equal(animePayload.duration, 4900);
+    assert.equal(animePayload.preview, false);
+    assert.equal(await animeOverlay.locator("video").count(), 0);
+    await animeEnd;
+    const animeElapsed = Date.now() - animeStart;
+    assert.ok(animeElapsed > 4500 && animeElapsed < 8000, `Anime launch lasted ${animeElapsed}ms`);
+    const animeTrace = await revealTrace(animeId);
+    assertReveal(animeTrace, 650);
+    assert.ok(animeTrace.frames.early && animeTrace.frames.late);
+    assert.notEqual(animeTrace.frames.early, animeTrace.frames.late);
+    await fs.writeFile(path.join(run, "anime-reveal.json"), JSON.stringify({
+      ...animeTrace, frames: undefined, elapsed: animeElapsed,
     }, null, 2));
     if (process.env.OPENLUDE_SKIP_FOCUS_ASSERT !== "1") {
       const foreground = await exec(path.join(bundle, "Contents/MacOS/fixture"), ["--probe-frontmost"]);
       assert.equal(Number(foreground.stdout.trim()), fixturePid);
     }
-    check("Maple launch uses 4 seconds of motion plus a fading icon, keeps moving during reveal, and hands focus to the target");
+    check("Anime launch uses 4 seconds of motion plus a fading icon, keeps moving during reveal, and hands focus to the target");
     await until(() => page.locator("#launch-target").isEnabled());
-    const skipMapleWindow = desktop.waitForEvent("window");
-    const skipMapleRun = page.evaluate(id => window.openlude.preview("maple", id, {
+    const skipAnimeWindow = desktop.waitForEvent("window");
+    const skipAnimeRun = page.evaluate(id => window.openlude.preview("anime", id, {
       duration: 1800, reducedMotion: false, showAppIcon: false,
     }), primary.id);
-    const skipMaple = await skipMapleWindow;
-    await skipMaple.waitForSelector("canvas.motion-canvas");
-    assert.equal((await skipMaple.evaluate(() => window.openlude.overlayPayload())).duration, 4000);
-    const skipMapleEnd = skipMaple.waitForEvent("close");
-    const skipMapleStart = Date.now();
-    await skipMaple.keyboard.press("Escape").catch(error => {
+    const skipAnime = await skipAnimeWindow;
+    await skipAnime.waitForSelector("canvas.motion-canvas");
+    assert.equal((await skipAnime.evaluate(() => window.openlude.overlayPayload())).duration, 4000);
+    const skipAnimeEnd = skipAnime.waitForEvent("close");
+    const skipAnimeStart = Date.now();
+    await skipAnime.keyboard.press("Escape").catch(error => {
       if (!String(error).includes("has been closed")) throw error;
     });
-    await skipMapleEnd;
-    assert.ok(Date.now() - skipMapleStart < 1000);
-    assert.equal((await skipMapleRun).ok, true);
-    check("Maple without an icon uses four seconds, and Escape releases it immediately");
+    await skipAnimeEnd;
+    assert.ok(Date.now() - skipAnimeStart < 1000);
+    assert.equal((await skipAnimeRun).ok, true);
+    check("Anime without an icon uses four seconds, and Escape releases it immediately");
     await fs.rename(bundle, bundle + ".moved");
     const missing = await page.evaluate(
       (id) => window.openlude.launch(id),
@@ -638,6 +797,23 @@ try {
   await desktop.close();
   desktop = null;
   const settingsFile = path.join(run, "state/settings.json");
+  const retiredState = JSON.parse(await fs.readFile(settingsFile, "utf8"));
+  retiredState.targets[0].theme = "maple";
+  retiredState.targets[1].theme = "aurora";
+  await fs.writeFile(settingsFile, JSON.stringify(retiredState));
+  const retiredBoot = await boot();
+  desktop = retiredBoot.application;
+  const normalized = JSON.parse(await fs.readFile(settingsFile, "utf8"));
+  assert.deepEqual(normalized.targets, retiredState.targets.map(target => ({ ...target, theme: "portal" })));
+  assert.deepEqual(normalized.preferences, retiredState.preferences);
+  assert.deepEqual(normalized.settings, retiredState.settings);
+  const themeBackups = (await fs.readdir(path.dirname(settingsFile))).filter(file => file.startsWith("settings.json.themes-backup-"));
+  assert.equal(themeBackups.length, 1);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(path.dirname(settingsFile), themeBackups[0]), "utf8")), retiredState);
+  assert.equal(await retiredBoot.page.locator('.theme-card[data-theme="maple"], .theme-card[data-theme="aurora"]').count(), 0);
+  check("Existing v2 cat/ocean bindings migrate to train, persist once and retain an exact backup, app paths and preferences");
+  await desktop.close();
+  desktop = null;
   const legacy = JSON.parse(await fs.readFile(settingsFile, "utf8"));
   legacy.version = 1;
   legacy.targets[0].builtin = true;
@@ -696,7 +872,7 @@ try {
 
   const reducedWindow = desktop.waitForEvent("window");
   const reducedRun = page.evaluate((id) =>
-    window.openlude.preview("maple", id, {
+    window.openlude.preview("anime", id, {
       duration: 1800, reducedMotion: true, showAppIcon: true,
     }), primary.id,
   );
@@ -711,10 +887,10 @@ try {
   assertReveal(reducedTrace, 160);
   assert.equal(reducedTrace.content.video, null);
   assert.ok(reducedTrace.samples.at(-1).at - reducedTrace.samples[0].at < 400);
-  check("Reduced motion uses a static maple frame and a short reveal after the icon intro");
+  check("Reduced motion uses a static illustrated frame and a short reveal after the icon intro");
   await desktop.close();
   desktop = null;
-  const second = await boot();
+  const second = await boot(true);
   desktop = second.application;
   const restored = await second.page.evaluate(() => window.openlude.state());
   assert.equal(
@@ -726,7 +902,7 @@ try {
   if (process.platform === "darwin")
     assert.equal(
       restored.targets.find((t) => t.name === "Openlude Launch Fixture").theme,
-      "maple",
+      "portal",
     );
   assert.equal(restored.settings.appearance, "system");
   assert.equal(restored.settings.autoCheckUpdates, false);
@@ -745,6 +921,14 @@ try {
   assert.deepEqual((await emptyRestart.page.evaluate(() => window.openlude.state())).targets, []);
   assert.equal(await emptyRestart.page.locator("#empty-workspace").isVisible(), true);
   check("Removing all apps restores the welcome screen; restart never repopulates presets");
+  await emptyRestart.page.locator("#nav-settings").click();
+  await emptyRestart.page.locator("#close-behavior").selectOption("quit");
+  await until(async () => (await emptyRestart.page.evaluate(() => window.openlude.state())).settings.closeBehavior === "quit");
+  const quit = desktop.waitForEvent("close");
+  await desktop.evaluate(({ BrowserWindow }) => { setTimeout(() => BrowserWindow.getAllWindows()[0].close(), 100); });
+  await quit;
+  desktop = null;
+  check("The quit-on-close option exits the app instead of leaving it in the tray");
   assert.deepEqual(errors, []);
   check("No renderer errors");
 } catch (error) {

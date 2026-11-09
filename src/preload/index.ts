@@ -8,6 +8,12 @@ const api: DesktopAPI = {
     ipcRenderer.invoke("target:bind", id, theme, preferences),
   preferences: (value) => ipcRenderer.invoke("preferences", value),
   settings: value => ipcRenderer.invoke("settings:update", value),
+  externalLaunchStatus: () => ipcRenderer.invoke("launch-observer:status"),
+  onExternalLaunchStatus: callback => {
+    const listener = (_event: Electron.IpcRendererEvent, status: Parameters<typeof callback>[0]) => callback(status);
+    ipcRenderer.on("launch-observer:status", listener);
+    return () => ipcRenderer.removeListener("launch-observer:status", listener);
+  },
   updateStatus: () => ipcRenderer.invoke("updates:status"),
   checkUpdates: () => ipcRenderer.invoke("updates:check"),
   downloadUpdate: () => ipcRenderer.invoke("updates:download"),
@@ -19,7 +25,7 @@ const api: DesktopAPI = {
     return () => ipcRenderer.removeListener("updates:status", listener);
   },
   onOpenSettings: callback => {
-    const listener = () => callback();
+    const listener = (_event: Electron.IpcRendererEvent, section?: Parameters<typeof callback>[0]) => callback(section);
     ipcRenderer.on("settings:open", listener);
     return () => ipcRenderer.removeListener("settings:open", listener);
   },

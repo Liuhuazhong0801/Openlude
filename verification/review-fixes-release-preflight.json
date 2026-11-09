@@ -1,0 +1,5 @@
+{
+  "exitCode": 1,
+  "message": "正式发布需要 Developer ID Application 证书（钥匙串或 CSC_LINK）；本地预览请运行 npm run pack:mac。",
+  "expected": "Missing local Developer ID certificate is rejected before release packaging"
+}

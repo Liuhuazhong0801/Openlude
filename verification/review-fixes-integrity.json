@@ -1,0 +1,11 @@
+{
+  "version": "0.6.1",
+  "thumbnails": 10,
+  "thumbnailBytes": 93866,
+  "packageAsarSha256": "821584873b3df545bda98d33bada5a7eb9acfc1d31209affad9d5757fe21a781",
+  "checks": [
+    "All thumbnail SHA256 values match generated originals and the package",
+    "Transactional state-store fix is packaged",
+    "Original frog and solo kangaroo footage remains byte-identical"
+  ]
+}

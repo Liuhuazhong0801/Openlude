@@ -1,6 +1,6 @@
 {
   "platform": "darwin",
-  "run": "/Users/yahaha/projects/TimeGate/test-results/run-1793952217410",
+  "run": "<repo>/test-results/run-1793952217410",
   "checks": [
     {
       "name": "Fresh installation starts empty and guides the user to add an app"

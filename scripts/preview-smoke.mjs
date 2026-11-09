@@ -9,6 +9,7 @@ await fs.mkdir(out, { recursive: true });
 const browser = await chromium.launch({
   channel: process.env.PREVIEW_BROWSER_CHANNEL || "chrome",
   headless: true,
+  args: ["--mute-audio"],
 });
 const context = await browser.newContext({
   viewport: { width: 1280, height: 1020 },
@@ -66,12 +67,13 @@ try {
     width: box.width * 0.3,
     height: box.height - 120,
   };
-  for (const theme of ["portal", "aurora", "paper", "pixel", "ink", "maple"]) {
+  for (const theme of ["comic", "anime", "portal", "paper", "pixel", "ink", "frog", "feidudu"]) {
     await page.locator(`#theme-picker [data-theme="${theme}"]`).click();
     await page.waitForTimeout(1150);
-    const early = await page.screenshot({ clip });
+    const sceneClip = ["frog", "feidudu"].includes(theme) ? {x:box.x+box.width*.4,y:box.y+60,width:box.width*.2,height:box.height-120} : clip;
+    const early = await page.screenshot({ clip:sceneClip });
     await page.waitForTimeout(650);
-    const later = await page.screenshot({ clip });
+    const later = await page.screenshot({ clip:sceneClip });
     assert.equal(
       early.equals(later),
       false,
@@ -84,6 +86,16 @@ try {
     console.log("PASS", theme);
     await page.waitForTimeout(1500);
   }
+  await page.locator('#theme-picker [data-theme="frog"]').click();
+  assert.equal(await page.locator("#demo-sound").isChecked(), false);
+  await page.waitForFunction(() => {const v=document.querySelector("video");return v && v.currentTime>.2&&!v.paused;});
+  assert.equal(await page.locator("video").evaluate(v => v.muted),true);
+  await page.locator("#demo-sound").check();
+  await page.waitForFunction(() => {const v=document.querySelector("video");return v && v.currentTime>.2&&!v.paused&&!v.muted;});
+  await page.locator('#theme-picker [data-theme="feidudu"]').click();
+  assert.equal(await page.locator("#demo-sound").isVisible(),true);
+  assert.equal(await page.locator("video").count(),1);
+  report.checks.push("Original footage decodes offline; original audio defaults off and enables explicitly; changing theme removes old media");
   await page.locator('#theme-picker [data-theme="portal"]').click();
   await page.locator("#demo-icon").uncheck();
   assert.equal(await page.locator(".app-emblem").isHidden(), true);

@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$TargetPath)
+param([Parameter(Mandatory=$true)][string]$TargetPath, [int]$ProcessId = 0)
 $ErrorActionPreference = 'Stop'
 if ([IO.Path]::GetExtension($TargetPath) -ieq '.lnk') {
   $ShortcutShell = New-Object -ComObject WScript.Shell
@@ -14,7 +14,8 @@ public class OpenludeWindows {
   [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr handle, int command);
 }
 '@
-$Candidate = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.Path -ieq $TargetPath } | Select-Object -First 1
+$Candidates = if ($ProcessId -gt 0) { Get-Process -Id $ProcessId -ErrorAction SilentlyContinue } else { Get-Process }
+$Candidate = $Candidates | Where-Object { $_.MainWindowHandle -ne 0 -and $_.Path -ieq $TargetPath } | Select-Object -First 1
 if ($null -eq $Candidate) { Write-Output 'False'; exit 0 }
 if ([OpenludeWindows]::IsIconic($Candidate.MainWindowHandle)) {
   [void][OpenludeWindows]::ShowWindowAsync($Candidate.MainWindowHandle, 9)
