@@ -9,7 +9,21 @@ $seen = @{}
 Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Concurrent;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
+public static class OpenludePath {
+  [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+  private static extern uint GetLongPathName(string path, StringBuilder buffer, uint size);
+  public static string Canonical(string path) {
+    var full = Path.GetFullPath(path);
+    if (Environment.OSVersion.Platform != PlatformID.Win32NT) return full;
+    var buffer = new StringBuilder(32768);
+    var length = GetLongPathName(full, buffer, (uint)buffer.Capacity);
+    return length > 0 && length < buffer.Capacity ? buffer.ToString() : full;
+  }
+}
 public sealed class OpenludeInputReader {
   private readonly ConcurrentQueue<string> lines = new ConcurrentQueue<string>();
   private volatile bool completed;
@@ -44,7 +58,7 @@ function Get-Snapshot {
     try {
       $entries = $byName[$item.ProcessName]
       if ($null -eq $entries) { continue }
-      $executable = $item.MainModule.FileName
+      $executable = [OpenludePath]::Canonical($item.MainModule.FileName)
       foreach ($entry in $entries) {
         if ([string]::Equals($executable, $entry.path, [StringComparison]::OrdinalIgnoreCase)) {
           $snapshot[$entry.id].Add($item.Id)
@@ -73,7 +87,8 @@ while ($true) {
             }
           }
           if ([IO.Path]::GetExtension($executable) -ine '.exe') { continue }
-          $entry = @{ id = $target.id; path = [IO.Path]::GetFullPath($executable); name = [IO.Path]::GetFileNameWithoutExtension($executable) }
+          $executable = [OpenludePath]::Canonical($executable)
+          $entry = @{ id = $target.id; path = $executable; name = [IO.Path]::GetFileNameWithoutExtension($executable) }
           $targets += $entry
         }
         $initial = Get-Snapshot
@@ -82,6 +97,7 @@ while ($true) {
           foreach ($processId in $processIds) { $snapshot += @{ id = $entry.id; pid = $processId } }
         }
         Emit @{ type = 'ready'; running = $snapshot }
+        if ($env:OPENLUDE_OBSERVER_DIAGNOSTICS -eq '1') { Emit @{ type = 'diagnostic'; targets = $targets } }
       }
     } catch { Emit @{ type = 'error' } }
   }

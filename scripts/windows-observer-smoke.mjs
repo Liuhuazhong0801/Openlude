@@ -25,7 +25,7 @@ const until = async (condition, milliseconds = timeout) => {
     if (helper?.exitCode !== null) throw new Error(`Observer exited: ${stderr}`);
     await delay(30);
   }
-  throw new Error(`Observer timed out: ${stderr}`);
+  throw new Error(`Observer timed out: ${stderr}; messages=${JSON.stringify(messages)}`);
 };
 try {
   if (process.platform === "win32") {
@@ -33,7 +33,9 @@ try {
     await fs.writeFile(compile, `param([string]$Destination)\nAdd-Type -TypeDefinition 'using System.Threading; public static class Fixture { public static void Main() { Thread.Sleep(30000); } }' -OutputAssembly $Destination -OutputType ConsoleApplication\n`);
     await exec(runtime, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", compile, executable], { timeout: 30000, windowsHide: true });
   }
-  helper = spawn(runtime, ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script], { windowsHide: true, stdio: "pipe" });
+  helper = spawn(runtime, ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script], {
+    windowsHide: true, stdio: "pipe", env: { ...process.env, OPENLUDE_OBSERVER_DIAGNOSTICS: "1" },
+  });
   helper.stderr.on("data", data => { stderr += data; });
   createInterface({ input: helper.stdout }).on("line", line => { try { messages.push(JSON.parse(line)); } catch {} });
   const configure = targets => helper.stdin.write(JSON.stringify({ type: "configure", targets }) + "\n");
@@ -44,7 +46,14 @@ try {
 
   if (process.platform === "win32") {
     fixture = spawn(executable, [], { windowsHide: true, stdio: "ignore" });
-    await until(() => messages.some(m => m.type === "launch" && m.id === "fixture"));
+    try { await until(() => messages.some(m => m.type === "launch" && m.id === "fixture")); }
+    catch (error) {
+      const inspect = path.join(directory, "inspect.ps1");
+      await fs.writeFile(inspect, `param([int]$ProcessId)\nGet-Process -Id $ProcessId | Select-Object ProcessName,Path,Id | ConvertTo-Json -Compress\n`);
+      const result = await exec(runtime, ["-NoProfile", "-NonInteractive", "-File", inspect, String(fixture.pid)], { windowsHide: true }).catch(e => ({ stdout: String(e) }));
+      error.message += `; fixture=${result.stdout}; configured=${executable}; exit=${fixture.exitCode}`;
+      throw error;
+    }
     assert.equal(messages.find(m => m.type === "launch").pid, fixture.pid);
     await delay(600);
     assert.equal(messages.filter(m => m.type === "launch").length, 1);
