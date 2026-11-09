@@ -1,0 +1,8 @@
+{
+  "name": "Openlude",
+  "description": "为 macOS 和 Windows 应用添加启动动画。支持 8 个主题、应用图标开场、动画渐隐、系统入口检测和按应用保存设置。Open-source launch animations for macOS and Windows.",
+  "homepage": "https://liuhuazhong0801.github.io/Openlude/",
+  "repository": "https://github.com/Liuhuazhong0801/Openlude",
+  "releaseTag": "v0.6.2",
+  "topics": ["animation", "app-launcher", "desktop-app", "electron", "glsl", "launch-animation", "macos", "open-source", "threejs", "typescript", "windows"]
+}
