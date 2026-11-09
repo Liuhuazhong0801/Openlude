@@ -67,8 +67,9 @@ try {
     check("Reconfiguration snapshots existing processes and termination is detected");
 
     const shortcut = path.join(directory, "shortcut.lnk"), createShortcut = path.join(directory, "shortcut.ps1");
-    await fs.writeFile(createShortcut, `param([string]$Target,[string]$Link)\n[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)\n$shell=New-Object -ComObject WScript.Shell\n$item=$shell.CreateShortcut($Link)\n$item.TargetPath=$Target\n$item.Save()\n$reopened=$shell.CreateShortcut($Link)\n@{target=$reopened.TargetPath;exists=(Test-Path -LiteralPath $reopened.TargetPath);link=$Link} | ConvertTo-Json -Compress\n`);
+    await fs.writeFile(createShortcut, `param([string]$Target,[string]$Link)\n$ErrorActionPreference="Stop"\n[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)\n$shell=New-Object -ComObject WScript.Shell\n$item=$shell.CreateShortcut($Link)\n$item.TargetPath=$Target\n$item.Save()\n$reopened=$shell.CreateShortcut($Link)\n@{target=$reopened.TargetPath;exists=(Test-Path -LiteralPath $reopened.TargetPath);link=$Link} | ConvertTo-Json -Compress\n`);
     const shortcutResult = await exec(runtime, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", createShortcut, executable, shortcut], { windowsHide: true });
+    assert.ok(shortcutResult.stdout.trim(), `Shortcut creation failed: ${shortcutResult.stderr}`);
     const shortcutInfo = JSON.parse(shortcutResult.stdout.replace(/^\uFEFF/, ""));
     assert.equal(shortcutInfo.exists, true, `Invalid shortcut fixture: ${shortcutResult.stdout}`);
     configure([{ id: "shortcut", path: shortcut }]);
