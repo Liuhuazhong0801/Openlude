@@ -11,7 +11,7 @@ await build({
   build: {
     lib: {
       entry: "src/renderer/preview.ts",
-      name: "TimeGatePreview",
+      name: "OpenludePreview",
       formats: ["iife"],
       fileName: "preview",
     },
@@ -20,24 +20,36 @@ await build({
     emptyOutDir: true,
   },
 });
-const [template, css, js, icon] = await Promise.all([
+const [template, css, js] = await Promise.all([
   fs.readFile("src/renderer/preview.html", "utf8"),
   fs.readFile(path.join(out, "preview.css"), "utf8"),
   fs.readFile(path.join(out, "preview.iife.js"), "utf8"),
-  fs.readFile("public/assets/branding/app-icon.png"),
 ]);
-const html = template
+let html = template
   .replace(
     '<script type="module" src="./preview.ts"></script>',
     `<style>${css}</style>`,
   )
   .replace(
-    "./assets/branding/app-icon.png",
-    `data:image/png;base64,${icon.toString("base64")}`,
-  )
-  .replace(
     "</body>",
     () => `<script>${js.replace(/<\/script/gi, "<\\/script")}</script></body>`,
   );
-await fs.writeFile(path.join(out, "TimeGate-preview.html"), html);
-console.log("Standalone preview: " + path.join(out, "TimeGate-preview.html"));
+for (const filename of [
+  "codex.png",
+  "workbuddy.svg",
+  "deepseek.png",
+  "doubao.png",
+]) {
+  const icon = await fs.readFile(`public/assets/apps/${filename}`);
+  const mime = filename.endsWith(".svg") ? "image/svg+xml" : "image/png";
+  html = html.replaceAll(
+    `./assets/apps/${filename}`,
+    `data:${mime};base64,${icon.toString("base64")}`,
+  );
+}
+for (const [filename, mime] of [["comic.png", "image/png"], ["anime.png", "image/png"], ["paper-world.png", "image/png"], ["night-train.png", "image/png"], ["originals/frog.mp4", "video/mp4"], ["originals/feidudu.mp4", "video/mp4"]]) {
+  const asset = await fs.readFile(`public/assets/themes/${filename}`);
+  html = html.replaceAll(`./assets/themes/${filename}`, `data:${mime};base64,${asset.toString("base64")}`);
+}
+await fs.writeFile(path.join(out, "Openlude-preview.html"), html);
+console.log("Standalone preview: " + path.join(out, "Openlude-preview.html"));

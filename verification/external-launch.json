@@ -1,0 +1,17 @@
+{
+  "platform": "darwin",
+  "checks": [
+    "Opening the app through the OS while Openlude is hidden automatically plays the saved animation and returns focus",
+    "Reopening an already running app does not replay or relaunch it",
+    "Disabling external launch animations takes effect without restarting Openlude",
+    "Enabling detection does not animate applications that were already running",
+    "An interrupted native observer reconnects without animating the existing app",
+    "An Openlude launch is suppressed by the observer and produces exactly one animation",
+    "A later cold start can play again after the app exits",
+    "Removing the app stops observing its launches",
+    "No renderer errors during system-launch integration"
+  ],
+  "errors": [],
+  "run": "<repo>/test-results/external-1794192609188",
+  "detectionToReadyMs": 1158
+}

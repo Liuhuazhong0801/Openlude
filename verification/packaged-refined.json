@@ -1,0 +1,27 @@
+{
+  "version": "0.4.1",
+  "platform": "darwin-arm64",
+  "sourceState": "local uncommitted working tree",
+  "gitHubSync": false,
+  "checks": [
+    "Packaged app launches with eight themes",
+    "Refined runtime thumbnails are visible",
+    "About page renders the selected silver fox",
+    "Bundled brand PNG matches the selected source SHA256",
+    "Native macOS ICNS matches generated icon"
+  ],
+  "brandPngSha256": "0aa2064beb97a055d09a86b436a770163b7ae26fce015d8a42f5e81cbd288ad7",
+  "errors": [],
+  "actualUserApp": {
+    "openedVersion": "0.4.1",
+    "refinedPortalPlaybackObserved": true,
+    "silverFoxVisibleInAboutPage": true,
+    "savedConfigurationUnchanged": true,
+    "restoredUnsavedDraft": {
+      "theme": "comic",
+      "duration": 3000,
+      "showAppIcon": false,
+      "reducedMotion": false
+    }
+  }
+}

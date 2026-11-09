@@ -1,0 +1,68 @@
+{
+  "retrievedAt": "2026-11-09",
+  "scope": "Approved by the project owner for inclusion in the Openlude 0.6.2 GitHub preview release; source attribution retained and third-party assets excluded from MIT.",
+  "assets": [
+    {
+      "id": "frog",
+      "file": "originals/frog.mp4",
+      "sourcePage": "https://naiwahub.com/zh/memes/ghn-naiwa-wallpaper-1c05a2a8af20",
+      "attributedSource": "https://github.com/Nailong-Studio/NaiWa-Wallpaper/blob/036afc4f4930c90e78c0a8e26d4a2da6606c95e2/videos/%E5%A5%B6%E8%9B%99-%E5%A4%A7%E7%AC%91.mp4",
+      "originalSha256": "1c05a2a8af2052f2f0a5909f917cf3f1146215a3e5b51542a2f349dc05987e08",
+      "sha256": "fd44b7081960ac6707b61d8571215d7264bc23afe2d6a9b0cfe6dd4a41680efd",
+      "processing": "原片前 4.2 秒；保留 1080×1474、30fps、原声和原速度；转为 H.264/AAC 供跨平台播放，未重绘角色或移除画面内容。",
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1080,
+            "height": 1474,
+            "r_frame_rate": "30/1"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "4.200000"
+        }
+      },
+      "rights": "Creator and redistribution license unverified. Rights remain with the respective holders; excluded from project MIT license."
+    },
+    {
+      "id": "feidudu",
+      "file": "originals/feidudu.mp4",
+      "sourcePage": "https://naiwahub.com/zh/memes/dot-feidudu-6ff4cdcdb0a1",
+      "attributedSource": "https://feidudu.org/",
+      "originalSha256": "6ff4cdcdb0a14a90c0db989fdc9081ffd7f9b6b326f1094e66cd691673fcef8c",
+      "sha256": "d32272927e9e0ebfa36a5b3070f7406483366cb295828ea50b47de4487f099a4",
+      "processing": "按用户选择采用单只袋鼠室内独舞的网络原片前 4 秒；保留 480×836、原比例、原速度和原声，转为 H.264/AAC；未裁出角色、未拼接其他角色、未使用重绘素材。",
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 480,
+            "height": 836,
+            "r_frame_rate": "24/1"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "r_frame_rate": "0/0"
+          }
+        ],
+        "format": {
+          "duration": "4.000000"
+        }
+      },
+      "rights": "Creator and redistribution license unverified. Rights remain with the respective holders; excluded from project MIT license."
+    }
+  ]
+}

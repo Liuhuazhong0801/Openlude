@@ -1,0 +1,22 @@
+{
+  "checks": [
+    "An empty/background workbench creates no WebGL scene and requests no theme thumbnails",
+    "A failed add leaves no phantom target and retrying the same application succeeds",
+    "Failed remove and preferences writes leave memory and disk at the last committed values",
+    "A Retina/5K viewport respects the QHD pixel budget and ink does not load the train artwork",
+    "Reselecting the current theme reuses its resources",
+    "Stopping a pending video play does not restart playback from an AbortError handler",
+    "Disposing a loading video settles readiness and removes the media element"
+  ],
+  "errors": [],
+  "out": "<repo>/test-results/regressions-1794204182967",
+  "buffer": {
+    "width": 2560,
+    "height": 1440
+  },
+  "stoppedVideo": {
+    "paused": true,
+    "currentTime": 0.000033,
+    "muted": true
+  }
+}

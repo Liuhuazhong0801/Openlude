@@ -1,0 +1,111 @@
+{
+  "scope": "WebGL counters after four scene-switching cycles",
+  "stable": true,
+  "rounds": [
+    [
+      {
+        "theme": "portal",
+        "geometries": 42,
+        "textures": 15,
+        "programs": 13
+      },
+      {
+        "theme": "aurora",
+        "geometries": 1,
+        "textures": 2,
+        "programs": 2
+      },
+      {
+        "theme": "paper",
+        "geometries": 71,
+        "textures": 3,
+        "programs": 4
+      },
+      {
+        "theme": "pixel",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 2
+      }
+    ],
+    [
+      {
+        "theme": "portal",
+        "geometries": 42,
+        "textures": 15,
+        "programs": 13
+      },
+      {
+        "theme": "aurora",
+        "geometries": 1,
+        "textures": 2,
+        "programs": 2
+      },
+      {
+        "theme": "paper",
+        "geometries": 71,
+        "textures": 3,
+        "programs": 4
+      },
+      {
+        "theme": "pixel",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 2
+      }
+    ],
+    [
+      {
+        "theme": "portal",
+        "geometries": 42,
+        "textures": 15,
+        "programs": 13
+      },
+      {
+        "theme": "aurora",
+        "geometries": 1,
+        "textures": 2,
+        "programs": 2
+      },
+      {
+        "theme": "paper",
+        "geometries": 71,
+        "textures": 3,
+        "programs": 4
+      },
+      {
+        "theme": "pixel",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 2
+      }
+    ],
+    [
+      {
+        "theme": "portal",
+        "geometries": 42,
+        "textures": 15,
+        "programs": 13
+      },
+      {
+        "theme": "aurora",
+        "geometries": 1,
+        "textures": 2,
+        "programs": 2
+      },
+      {
+        "theme": "paper",
+        "geometries": 71,
+        "textures": 3,
+        "programs": 4
+      },
+      {
+        "theme": "pixel",
+        "geometries": 1,
+        "textures": 1,
+        "programs": 2
+      }
+    ]
+  ],
+  "errors": []
+}

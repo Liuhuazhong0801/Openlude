@@ -1,0 +1,65 @@
+{
+  "checks": [
+    "An empty/background workbench creates no WebGL scene and requests no theme thumbnails",
+    "A failed add leaves no phantom target and retrying the same application succeeds",
+    "Failed remove and preferences writes leave memory and disk at the last committed values",
+    "A Retina/5K viewport respects the QHD pixel budget and ink does not load the train artwork",
+    "Reselecting the current theme reuses its resources",
+    "The train draws the full window; the carriage remains fixed while the skyline and water move",
+    "Stopping a pending video play does not restart playback from an AbortError handler",
+    "Disposing a loading video settles readiness and removes the media element"
+  ],
+  "errors": [],
+  "out": "<repo>/test-results/regressions-1794205581629",
+  "buffer": {
+    "width": 2560,
+    "height": 1440
+  },
+  "trainPixels": {
+    "early": [
+      [
+        53,
+        53,
+        48,
+        255
+      ],
+      [
+        41,
+        82,
+        140,
+        255
+      ],
+      [
+        49,
+        131,
+        134,
+        255
+      ]
+    ],
+    "later": [
+      [
+        53,
+        53,
+        48,
+        255
+      ],
+      [
+        41,
+        78,
+        136,
+        255
+      ],
+      [
+        62,
+        72,
+        104,
+        255
+      ]
+    ]
+  },
+  "stoppedVideo": {
+    "paused": true,
+    "currentTime": 0.000048,
+    "muted": true
+  }
+}

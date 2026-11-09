@@ -1,0 +1,14 @@
+{
+  "version": "0.6.2",
+  "checks": [
+    "Packaged upgrade preserves both app bindings and preferences, migrates retired IDs and keeps an exact backup",
+    "Exactly eight themes remain; thumbnails load and circular selection still centers and wraps",
+    "Packaged carriage-window animation moves, respects the pixel budget and closes normally"
+  ],
+  "errors": [],
+  "out": "<repo>/test-results/train-packaged-1794205875323",
+  "buffer": {
+    "width": 2560,
+    "height": 1440
+  }
+}

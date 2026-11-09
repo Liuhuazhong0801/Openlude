@@ -1,0 +1,32 @@
+{
+  "version": "0.4.0",
+  "sourceState": "uncommitted local working tree",
+  "baseCommit": "fe9511d536e2bb47dcdada4fc6629b4de24a0d3a",
+  "gitHubSync": false,
+  "package": "macOS arm64 zip",
+  "zipSha256": "99039bc9493c69dea0d5c791fd377960c70924adf0c29b9ebe9c2bc55e1e1769",
+  "signatureIntegrity": "codesign --verify --deep --strict passed; ad-hoc, not notarized",
+  "nativeUI": {
+    "settingsCategories": [
+      "通用",
+      "外观",
+      "更新",
+      "关于"
+    ],
+    "settingsIsFullPage": true,
+    "versionVisible": "0.4.0",
+    "savedConfigUnchanged": true,
+    "unsavedDraftRestored": {
+      "theme": "comic",
+      "duration": 3000,
+      "showAppIcon": false,
+      "reducedMotion": false
+    },
+    "leftOpenOn": "通用"
+  },
+  "limitations": [
+    "Windows desktop behaviors not verified on a Windows machine",
+    "Login item parameters tested using mocks; no logout/login test",
+    "Signed automatic update installation not yet exercised"
+  ]
+}

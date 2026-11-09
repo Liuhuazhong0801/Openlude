@@ -1,0 +1,31 @@
+
+> openlude@0.6.1 test
+> node --test "dist-electron/main/*.test.js" scripts/pack-release.test.mjs
+
+✔ platform paths support spaces and Unicode, reject executable substitutions (0.509959ms)
+✔ settings reject values that could leave an overlay stuck (0.864208ms)
+✔ persisted configuration rejects duplicate IDs and unsafe URLs (0.232167ms)
+✔ per-app settings preserve legacy defaults and reject invalid overrides (0.101167ms)
+✔ the app icon is optional, defaults on for old settings and rejects invalid values (0.079875ms)
+✔ original theme audio defaults to silence and opt-in persists independently per app (0.124417ms)
+✔ identity precedes motion and motion continues during the reveal (0.156416ms)
+✔ fresh installs start with no preselected applications (0.04475ms)
+✔ image-based themes use four seconds without changing other saved durations (0.066375ms)
+✔ illustrated themes preserve their sequence timing and reduced-motion preference (0.093125ms)
+✔ legacy starter entries are retired while local bindings and custom apps survive (0.155916ms)
+✔ general settings default to the system theme and validate persisted changes (0.120625ms)
+✔ product rename copies valid legacy settings once without overwriting either copy (4.7005ms)
+✔ failed writes leave committed state unchanged and later changes do not persist failed edits (1.000208ms)
+✔ queued transactions observe successful predecessors and commit only after persistence (1.689916ms)
+✔ failed settings persistence rolls system effects back to the committed settings (0.1425ms)
+✔ Retina, 4K and ultrawide render buffers stay within the pixel budget (0.112083ms)
+✔ release preflight refuses missing or ad-hoc identities even when notarization is configured (0.53225ms)
+✔ release preflight requires notarization and accepts supported credential sources (0.099791ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40.540583

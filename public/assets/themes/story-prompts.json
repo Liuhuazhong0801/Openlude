@@ -1,0 +1,17 @@
+{
+  "mode": "Built-in image_gen",
+  "createdAt": "2026-11-09",
+  "assets": [
+    {
+      "key": "night-train",
+      "transparent": false,
+      "prompt": "Use case: illustration-story. Asset: one original cinematic Japanese-anime background for an animated desktop launch theme 'Starsea Express'. Landscape 16:9, maximum detail. View from a fast train across a richly painted nighttime waterfront city: layers of navy and indigo skyscrapers, many tiny warm lit windows, a luminous elevated train viaduct crossing the lower third, teal reflections on water, warm amber station lamps and restrained magenta shop lights at the edges, distant mountain silhouettes, huge indigo clouds and a few delicate stars. Light rain and a sense of travel, beautifully painted film-background craftsmanship and exquisite atmospheric perspective. The perspective should be a wide lateral view across the city, not a central tunnel or corridor. Open center for visual breathing room. Foreground cable silhouettes and close buildings frame the bottom and edges, distant skyline spans the middle. No actual train carriage or window frame, no painted rain streaks (rain and glass frame will be animated separately), no human faces, no lettering, no logos, no interface, no watermark, no border. The city must feel like an inviting place, with rich small architectural details, not a generic neon gradient. Original animated-film artwork, no photorealistic or 3D-render look.",
+      "file": "night-train.png",
+      "dimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sha256": "7dc59858f3488179c1b96b5f012fe9a635c8b355cbd066b800fe6cf1bd10b106"
+    }
+  ]
+}

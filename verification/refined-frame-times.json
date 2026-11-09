@@ -1,0 +1,32 @@
+[
+  {
+    "theme": "comic",
+    "samples": 162,
+    "medianMs": 5.5,
+    "p95Ms": 6.7999999999999545
+  },
+  {
+    "theme": "anime",
+    "samples": 69,
+    "medianMs": 11.399999999999864,
+    "p95Ms": 17.299999999999955
+  },
+  {
+    "theme": "portal",
+    "samples": 56,
+    "medianMs": 16.700000000000045,
+    "p95Ms": 17.700000000000045
+  },
+  {
+    "theme": "aurora",
+    "samples": 116,
+    "medianMs": 6.899999999999864,
+    "p95Ms": 12
+  },
+  {
+    "theme": "paper",
+    "samples": 75,
+    "medianMs": 11.100000000000136,
+    "p95Ms": 17.799999999999955
+  }
+]

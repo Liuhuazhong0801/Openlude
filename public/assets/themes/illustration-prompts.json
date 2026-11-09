@@ -1,0 +1,26 @@
+{
+  "generator": "built-in image_gen",
+  "createdAt": "2026-11-06",
+  "assets": [
+    {
+      "key": "anime",
+      "prompt": "Use case: illustration-story. Asset type: high-resolution 16:9 background painting for an original Japanese-anime-style desktop launch animation. Create an exquisite cinematic hand-painted spring coastal panorama: enormous luminous white cumulus clouds with finely painted blue and peach shadows, brilliant turquoise-to-cobalt sky, a distant sparkling sea along the lower third, a small sleepy Japanese seaside town and sloping railway at the very bottom, pink cherry blossom boughs framing the extreme upper corners. Vast airy open center, dramatic cloud depth, warm late-afternoon sunlight, subtle paper-like paint texture, sharp background-animation detail, elegant atmospheric perspective. The sky and clouds occupy about 75% of the frame. It should look like a beautiful original animated film background, not a photograph or 3D render. No people, no foreground falling petals (these will be animated separately), no lettering, no logos, no interface, no watermark, no black borders. Landscape 3840x2160 composition.",
+      "file": "anime.png",
+      "dimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sha256": "eebba2cbd8953101ffb0a1248eb8dd5ef76d767b63fb58540553aa4c800b0d0b"
+    },
+    {
+      "key": "comic",
+      "prompt": "Use case: illustration-story. Asset type: four-panel full-bleed texture atlas for an animated graphic-comic launch sequence. Produce ONE wide 16:9 illustration divided into exactly four equal rectangular quadrants (2 columns by 2 rows), with no gutters, frames, margins or text; each quadrant is a complete standalone composition. Bold premium screen-printed comic-book art, confident black brush contours, sophisticated halftone dots and colored offset ink. Cohesive limited palette of warm paper cream, golden yellow, cyan blue and coral orange. An original adult female rooftop courier in a red-orange windbreaker, short black hair, dynamic urban action. Top-left quadrant: extreme close-up of her determined eyes and windswept hair, diagonal shadows. Top-right quadrant: close-up of a sneaker landing on a rooftop with dust and dramatic foreshortening. Bottom-left quadrant: wide dynamic shot of her leaping between sunlit rooftops, bright yellow sky and blue city silhouettes. Bottom-right quadrant: optimistic sweeping skyline with her small silhouette on a rooftop, rising diagonal composition. Beautiful editorial comic design, authentic imperfect printed texture, energetic cinematic poses, densely finished but instantly readable. Original character, no speech bubbles, no letters, no sound-effect words, no logos, no watermark. High-resolution 3840x2160 landscape atlas.",
+      "file": "comic.png",
+      "dimensions": {
+        "width": 1672,
+        "height": 941
+      },
+      "sha256": "7d0c2e6883a96f08b7a522e876945a4d822f0a4172524e0f0ecf4a33d8ea72d3"
+    }
+  ]
+}

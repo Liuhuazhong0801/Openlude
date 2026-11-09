@@ -1,0 +1,85 @@
+{
+  "generator": "Browser Canvas WebP thumbnails; source artwork unchanged",
+  "assets": [
+    {
+      "id": "comic",
+      "source": "comic.png",
+      "file": "comic.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "7d0c2e6883a96f08b7a522e876945a4d822f0a4172524e0f0ecf4a33d8ea72d3",
+      "sha256": "31e72a6ad8b9e89a5061903b347885fc7ae55b7dec5cf986f59169be27e90610",
+      "bytes": 19904
+    },
+    {
+      "id": "anime",
+      "source": "anime.png",
+      "file": "anime.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "eebba2cbd8953101ffb0a1248eb8dd5ef76d767b63fb58540553aa4c800b0d0b",
+      "sha256": "8392421bc58959626343b82de82e17f5b81a84e7bcf422e2361a5e78647f725f",
+      "bytes": 14462
+    },
+    {
+      "id": "portal",
+      "source": "portal.png",
+      "file": "portal.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "925445eba066dc8669becd061150d8d5a527ea564abb0377df2c8305724c3260",
+      "sha256": "418a8dd4869fd0c52237549656a61749e939dd08ba35d719b1431c9454082fc8",
+      "bytes": 8416
+    },
+    {
+      "id": "paper",
+      "source": "paper.png",
+      "file": "paper.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "0a491a214548906d927ffac42cbf718e74f0f3020b252746ce28b52680c638df",
+      "sha256": "ed4db961867253d068d7f490d428a61819abfe3063e389d4c17391431167aacd",
+      "bytes": 17184
+    },
+    {
+      "id": "pixel",
+      "source": "pixel.png",
+      "file": "pixel.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "b0be0e3e4224c95796c71f8cb12c5d2a614a69a56d6727a2fc49506c0a0b1cba",
+      "sha256": "61f77a5c6e5d2792a4a8e172e489e6f0fef9c14b1e34896066165c78b21e8319",
+      "bytes": 3650
+    },
+    {
+      "id": "ink",
+      "source": "ink.png",
+      "file": "ink.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "b633a972591d7b756b8f51199b88cf97760aeb14861bb3de7b44a9712e813633",
+      "sha256": "e85803db12bd9fe224f39c83e46376d61448206c1dd3772a13d7236f26e2ca50",
+      "bytes": 2904
+    },
+    {
+      "id": "frog",
+      "source": "frog.png",
+      "file": "frog.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "4c2b4301eb3cb5fc49fc9f4b1db56d0e8714460b975c4905b53d26522f65ace7",
+      "sha256": "9609ea6058f548f03ad180a5b12786c8989d115b76467d92f99702ad960a7df9",
+      "bytes": 2180
+    },
+    {
+      "id": "feidudu",
+      "source": "feidudu.png",
+      "file": "feidudu.webp",
+      "width": 256,
+      "height": 144,
+      "sourceSha256": "0e1da3607a8483ed19501a67c43b33181ed5423a38ec40fc9561fc5866d5af5f",
+      "sha256": "31bc0c483b6630df3c521fbad5227e86054c1ab5216bbe6385d98cb0618b543f",
+      "bytes": 2226
+    }
+  ]
+}

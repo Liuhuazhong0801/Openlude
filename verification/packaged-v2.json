@@ -1,0 +1,9 @@
+{
+  "version": "0.2.0",
+  "platform": "darwin",
+  "checks": [
+    "Packaged app boots with four target icons",
+    "Packaged full-screen uses Codex icon and closes automatically"
+  ],
+  "errors": []
+}

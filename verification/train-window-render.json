@@ -1,0 +1,89 @@
+{
+  "errors": [],
+  "frames": [
+    {
+      "width": 1600,
+      "height": 900,
+      "dpr": 1,
+      "progress": 0.12,
+      "file": "<repo>/work/train-window-v062/train-1600-0.12.png"
+    },
+    {
+      "width": 1600,
+      "height": 900,
+      "dpr": 1,
+      "progress": 0.52,
+      "file": "<repo>/work/train-window-v062/train-1600-0.52.png"
+    },
+    {
+      "width": 1600,
+      "height": 900,
+      "dpr": 1,
+      "progress": 0.92,
+      "file": "<repo>/work/train-window-v062/train-1600-0.92.png",
+      "stats": {
+        "geometries": 1,
+        "textures": 1,
+        "programs": 1,
+        "width": 1600,
+        "height": 900
+      }
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "dpr": 1,
+      "progress": 0.12,
+      "file": "<repo>/work/train-window-v062/train-1024-0.12.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "dpr": 1,
+      "progress": 0.52,
+      "file": "<repo>/work/train-window-v062/train-1024-0.52.png"
+    },
+    {
+      "width": 1024,
+      "height": 768,
+      "dpr": 1,
+      "progress": 0.92,
+      "file": "<repo>/work/train-window-v062/train-1024-0.92.png",
+      "stats": {
+        "geometries": 1,
+        "textures": 1,
+        "programs": 1,
+        "width": 1024,
+        "height": 768
+      }
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "dpr": 2,
+      "progress": 0.12,
+      "file": "<repo>/work/train-window-v062/train-2560-0.12.png"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "dpr": 2,
+      "progress": 0.52,
+      "file": "<repo>/work/train-window-v062/train-2560-0.52.png"
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "dpr": 2,
+      "progress": 0.92,
+      "file": "<repo>/work/train-window-v062/train-2560-0.92.png",
+      "stats": {
+        "geometries": 1,
+        "textures": 1,
+        "programs": 1,
+        "width": 2560,
+        "height": 1440
+      }
+    }
+  ]
+}

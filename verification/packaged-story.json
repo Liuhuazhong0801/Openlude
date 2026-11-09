@@ -1,0 +1,15 @@
+{
+  "platform": "darwin",
+  "version": "0.6.0",
+  "checks": [
+    "Packaged 0.6.0 starts empty, defaults silent, and loads all ten thumbnails",
+    "Packaged portal: assets load, native playback completes, and overlay closes",
+    "Packaged aurora: assets load, native playback completes, and overlay closes",
+    "Packaged maple: assets load, native playback completes, and overlay closes",
+    "Packaged frog: assets load, native playback completes, and overlay closes",
+    "Packaged feidudu: assets load, native playback completes, and overlay closes",
+    "Packaged sound switch saves per app, enables original audio, and Esc ends playback"
+  ],
+  "errors": [],
+  "out": "<repo>/test-results/packaged-story-1794196450158"
+}

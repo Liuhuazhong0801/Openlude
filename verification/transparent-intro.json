@@ -1,0 +1,12 @@
+{
+  "background": "#000000",
+  "width": 2560,
+  "height": 1440,
+  "opaquePixels": 9216,
+  "cornerAlpha": 0,
+  "backgrounds": [
+    "rgba(0, 0, 0, 0)",
+    "rgba(0, 0, 0, 0)",
+    "rgba(0, 0, 0, 0)"
+  ]
+}

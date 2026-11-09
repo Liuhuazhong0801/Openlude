@@ -1,0 +1,159 @@
+{
+  "platform": "darwin",
+  "run": "<repo>/test-results/run-1794204279967",
+  "checks": [
+    {
+      "name": "Fresh installation starts empty and guides the user to add an app"
+    },
+    {
+      "name": "Theme carousel hides the scrollbar, centers first/middle/last choices, wraps and supports arrow keys"
+    },
+    {
+      "name": "Adding local apps enables the workspace, keeps app identity icons and removes location/launch arrows"
+    },
+    {
+      "name": "Only app identity remains in the list; delete appears on hover; binding area and footer hints are removed"
+    },
+    {
+      "name": "Bottom-left settings open a full page, switch light/dark immediately and restore follow-system mode"
+    },
+    {
+      "name": "Settings restore four dedicated sidebar categories and keyboard navigation"
+    },
+    {
+      "name": "Settings persist login-item requests and auto-update preference; missing releases and offline errors are handled"
+    },
+    {
+      "name": "Closing to the tray preserves animation drafts; tray actions reopen the matching settings category"
+    },
+    {
+      "name": "Minimum window size keeps playback and save controls visible"
+    },
+    {
+      "name": "Switching apps updates identity and preserves unsaved drafts without persisting"
+    },
+    {
+      "name": "App icon visibility is an independent per-app draft until saved"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: comic"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: anime"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: portal"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: aurora"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: paper"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: pixel"
+    },
+    {
+      "name": "Scene motion changes pixels outside the icon: ink"
+    },
+    {
+      "name": "Cat poses and curtains move without video, while other theme durations are preserved"
+    },
+    {
+      "name": "Original frog: source footage moves, defaults muted, audio/skip lifecycle and native playback work"
+    },
+    {
+      "name": "Original feidudu: source footage moves, defaults muted, audio/skip lifecycle and native playback work"
+    },
+    {
+      "name": "comic: native scene loads, independent layers move, and playback closes"
+    },
+    {
+      "name": "anime: native scene loads, independent layers move, and playback closes"
+    },
+    {
+      "name": "portal: native scene loads, independent layers move, and playback closes"
+    },
+    {
+      "name": "aurora: native scene loads, independent layers move, and playback closes"
+    },
+    {
+      "name": "paper: native scene loads, independent layers move, and playback closes"
+    },
+    {
+      "name": "Native intro has a transparent window/root/stage and only target-icon pixels, with no name or backdrop"
+    },
+    {
+      "name": "The icon disappears before the full-screen scene fades in using unsaved settings"
+    },
+    {
+      "name": "Escape removes the full-screen overlay"
+    },
+    {
+      "name": "Disabling app icons skips the identity stage in the actual native overlay"
+    },
+    {
+      "name": "Native file selection and theme binding persist"
+    },
+    {
+      "name": "Actual launch uses only the custom app's bundle icon"
+    },
+    {
+      "name": "The portal keeps moving during the native fade, after the icon intro ends"
+    },
+    {
+      "name": "Real macOS app starts; duplicate launch is rejected; overlay is removed",
+      "detail": "2873ms"
+    },
+    {
+      "name": "Foreground focus reaches the real target application",
+      "detail": "target PID 64862; foreground PID 64862"
+    },
+    {
+      "name": "The target is already active behind the overlay when the fade begins"
+    },
+    {
+      "name": "Maple launch uses 4 seconds of motion plus a fading icon, keeps moving during reveal, and hands focus to the target"
+    },
+    {
+      "name": "Maple without an icon uses four seconds, and Escape releases it immediately"
+    },
+    {
+      "name": "Missing application path fails without leaving an overlay"
+    },
+    {
+      "name": "Unavailable icons skip the identity stage without adding text or a substitute logo"
+    },
+    {
+      "name": "Upgrade backs up v1, removes unbound presets and preserves local bindings/custom apps"
+    },
+    {
+      "name": "Skip releases the screen while the OS launch is still pending",
+      "detail": "260ms"
+    },
+    {
+      "name": "A stalled launch cannot hold the animation overlay indefinitely",
+      "detail": "2218ms"
+    },
+    {
+      "name": "Reduced motion uses a static cat frame and a short reveal after the icon intro"
+    },
+    {
+      "name": "Background launch keeps the workbench hidden and activation restores it"
+    },
+    {
+      "name": "Preferences, general settings and theme bindings survive restart"
+    },
+    {
+      "name": "Removing all apps restores the welcome screen; restart never repopulates presets"
+    },
+    {
+      "name": "The quit-on-close option exits the app instead of leaving it in the tray"
+    },
+    {
+      "name": "No renderer errors"
+    }
+  ],
+  "pending": [],
+  "errors": []
+}

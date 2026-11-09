@@ -1,0 +1,21 @@
+{
+  "scope": "Browser renderer only; no native launch assertions",
+  "checks": [
+    "Four demo icons switch correctly; no app name or launcher identity in the scene",
+    "comic: scene pixels change outside the target icon",
+    "anime: scene pixels change outside the target icon",
+    "portal: scene pixels change outside the target icon",
+    "aurora: scene pixels change outside the target icon",
+    "paper: scene pixels change outside the target icon",
+    "pixel: scene pixels change outside the target icon",
+    "ink: scene pixels change outside the target icon",
+    "maple: scene pixels change outside the target icon",
+    "frog: scene pixels change outside the target icon",
+    "feidudu: scene pixels change outside the target icon",
+    "Original footage decodes offline; original audio defaults off and enables explicitly; changing theme removes old media",
+    "Icon disabled: motion starts directly without an identity stage",
+    "Icon enabled: measurable fade-in, icon alone on transparency, fade-out, then scene appears"
+  ],
+  "errors": [],
+  "video": "<repo>/test-results/preview/video/page@d29d1ba435253cf8026156f67e789267.webm"
+}

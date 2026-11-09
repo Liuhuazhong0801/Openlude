@@ -26,7 +26,7 @@ Pull Request 说明修改的问题、实现后的行为、实际验证结果和�
 ## 验证范围
 
 - CI 验证类型、构建、配置与路径逻辑，以及单文件动效预览的构建。
-- 修改桌面启动或窗口生命周期时，在解锁的本机运行 `npm run test:desktop`。
+- 修改桌面启动或窗口生命周期时，在解锁的本机运行 `npm run test:desktop`；修改系统启动检测时，再运行 `npm run test:external` 与 Windows 上的 `npm run test:windows-observer`；修改持久化或渲染生命周期时运行 `npm run test:regressions`。
 - 修改动效时，运行 `npm run build:preview` 和 `npm run test:preview`，并实际查看效果。首次运行预览测试前安装 Chrome 并执行 `npx playwright install ffmpeg`。
 - Windows 的构建成功不代表 Windows 桌面行为已验收，需要 Windows 实机检查启动、全屏动画和窗口激活。
 
@@ -34,4 +34,6 @@ Pull Request 说明修改的问题、实现后的行为、实际验证结果和�
 
 提交源码、必要素材、依赖锁文件和经过整理的验证记录。依赖目录、缓存、个人环境配置、安装包与临时测试输出由 `.gitignore` 排除。
 
-公开发布前应另行确定代码许可、应用签名、公证与 Release 产物；本仓库初始化不会自动发布安装包。
+公开发布前应另行确定代码许可、应用签名、公证与 Release 产物；CI 检查通过后生成预览安装包工件；GitHub Release 的公开发布仍需项目所有者明确授权。使用 `npm run build` 后运行 `npm run pack:preview -- --arch arm64` 或 `x64` 构建预览包，正式 Mac 发布继续使用有证书、公证检查的 `pack:release`。
+
+主题缩略图由 `npm run assets:thumbnails` 生成，生成任务需要 Chrome。更换主题封面后，提交对应缩略图与 `thumbnails/manifest.json`；不要让主题栏直接引用全尺寸原图。
