@@ -29,12 +29,16 @@ const check = name => { checks.push(name); console.log("PASS", name); };
 try {
   browser = await chromium.launch({
     channel: process.env.PREVIEW_BROWSER_CHANNEL || (process.env.CI ? undefined : "chrome"),
-    headless: true, args: ["--mute-audio", "--enable-unsafe-swiftshader"],
+    headless: true, args: ["--mute-audio", "--enable-unsafe-swiftshader", ...(process.env.SITE_SOFTWARE_GL === "1" ? ["--use-angle=swiftshader"] : [])],
   });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   inspect(page);
+  await page.clock.install({ time: new Date("2026-11-09T00:00:00Z") });
   await page.goto(url);
   await page.waitForSelector(".canvas-host.ready", { timeout: 20000 });
+  // Freeze at explicit animation phases so slow software-GPU screenshots cannot
+  // accidentally sample the same completed frame twice.
+  await page.clock.pauseAt(new Date("2026-11-09T01:00:00Z"));
   assert.equal(await page.locator(".theme-option").count(), 8);
   assert.equal(await page.locator('canvas.motion-canvas').count(), 1);
   const panelWidth = (await page.locator(".preview-shell").boundingBox()).width;
@@ -47,9 +51,11 @@ try {
     await page.locator(`.theme-option[data-theme="${id}"]`).click();
     await page.waitForSelector(`.demo-stage[data-theme="${id}"] .canvas-host.ready`);
     assert.equal(await page.locator(`.theme-option[data-theme="${id}"]`).getAttribute("aria-pressed"), "true");
-    await page.waitForTimeout(220);
+    await page.clock.runFor(500);
+    assert(Number(await page.locator("#demo-progress").getAttribute("aria-valuenow")) < 100);
     const early = await page.locator("canvas.motion-canvas").screenshot();
-    await page.waitForTimeout(360);
+    await page.clock.runFor(900);
+    assert(Number(await page.locator("#demo-progress").getAttribute("aria-valuenow")) < 100);
     const later = await page.locator("canvas.motion-canvas").screenshot();
     assert(!early.equals(later), `${id} canvas must contain changing scene pixels`);
     if (id === "frog" || id === "feidudu") {
@@ -58,6 +64,7 @@ try {
     await page.locator("#demo-stage").screenshot({ path: path.join(output, `theme-${id}.png`) });
     check(`${id}: actual animation changes and selection stays synchronized`);
   }
+  await page.clock.resume();
   await page.locator('.theme-option[data-theme="frog"]').click();
   await page.waitForSelector(".canvas-host.ready");
   await page.locator("#sound-control").click();

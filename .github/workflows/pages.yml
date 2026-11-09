@@ -39,7 +39,17 @@ jobs:
       - name: Install browser for website checks
         run: npx playwright install --with-deps chromium
       - name: Verify website interactions
+        env:
+          SITE_SOFTWARE_GL: "1"
         run: npm run test:site
+      - name: Keep browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: website-browser-diagnostics
+          path: test-results/site
+          if-no-files-found: ignore
+          retention-days: 3
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
