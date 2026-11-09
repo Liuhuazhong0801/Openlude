@@ -70,7 +70,7 @@ try {
     // Use the Windows Unicode shell API, rather than WScript's ANSI TargetPath setter.
     await fs.writeFile(createShortcut, `const {app,shell}=require("electron");
 const fs=require("node:fs"),path=require("node:path");
-app.setPath("userData",path.join(path.dirname(process.argv[2]),"electron-state"));
+const data=path.join(path.dirname(process.argv[2]),"electron-state");fs.mkdirSync(data,{recursive:true});app.setPath("userData",data);
 app.whenReady().then(()=>{
  if(!shell.writeShortcutLink(process.argv[2],"create",{target:process.argv[3]}))throw new Error("Shortcut creation failed");
  const info=shell.readShortcutLink(process.argv[2]);
