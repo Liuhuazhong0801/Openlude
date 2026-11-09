@@ -101,7 +101,12 @@ app.whenReady().then(()=>{
   assert.equal(messages.some(m => m.type === "error"), false, JSON.stringify(messages));
   console.log(JSON.stringify({ platform: process.platform, protocolOnly: process.platform !== "win32", checks: checks.length }));
 } finally {
-  fixture?.kill();
-  helper?.kill();
-  await fs.rm(directory, { recursive: true, force: true });
+  // Windows keeps the executable mapped until process shutdown has completed.
+  await Promise.all([fixture, helper].map(async child => {
+    if (!child || child.exitCode !== null || child.signalCode !== null) return;
+    const closed = new Promise(resolve => child.once("close", resolve));
+    child.kill();
+    await closed;
+  }));
+  await fs.rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
 }
