@@ -76,7 +76,7 @@ while ($true) {
       if ($message.type -eq 'configure') {
         $targets = @(); $seen = @{}; $snapshot = @()
         foreach ($target in $message.targets) {
-          $executable = $target.path
+          $executable = [OpenludePath]::Canonical($target.path)
           if ([IO.Path]::GetExtension($executable) -ieq '.lnk') {
             $shortcutShell = New-Object -ComObject WScript.Shell
             $shortcut = $shortcutShell.CreateShortcut($executable)
@@ -85,6 +85,7 @@ while ($true) {
               [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shortcut)
               [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shortcutShell)
             }
+            if ($env:OPENLUDE_OBSERVER_DIAGNOSTICS -eq '1') { Emit @{ type = 'diagnostic'; shortcut = $target.path; resolved = $executable } }
           }
           if ([IO.Path]::GetExtension($executable) -ine '.exe') { continue }
           $executable = [OpenludePath]::Canonical($executable)
