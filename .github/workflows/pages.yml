@@ -25,6 +25,8 @@ jobs:
       pages: read
     env:
       ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    outputs:
+      release_ready: ${{ steps.release.outputs.release_ready }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -50,8 +52,14 @@ jobs:
           path: test-results/site
           if-no-files-found: ignore
           retention-days: 3
-      - name: Configure Pages
+      - name: Verify published release downloads
+        id: release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/site-release.mjs
+      - name: Configure Pages
+        if: steps.release.outputs.release_ready == 'true'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Upload website
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
@@ -60,7 +68,7 @@ jobs:
 
   deploy:
     name: Publish website
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && needs.build.outputs.release_ready == 'true'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -8,21 +8,21 @@
 
 Openlude 是一款适用于 macOS 和 Windows 的应用启动动画工具。添加自己的应用，选一个主题，保存绑定；从工作台启动，或让 Openlude 留在后台，通过原来的 Dock、桌面和开始菜单打开应用，即可播放开场动画。
 
-[介绍网站与主题试玩](https://liuhuazhong0801.github.io/Openlude/) · [下载 0.6.2 预览版](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2) · [开始使用](#开始使用) · [动画主题](#动画主题) · [参与开发](CONTRIBUTING.md) · [反馈问题](https://github.com/Liuhuazhong0801/Openlude/issues)
+[介绍网站与主题试玩](https://liuhuazhong0801.github.io/Openlude/) · [下载 1.0.0 正式版](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v1.0.0) · [开始使用](#开始使用) · [动画主题](#动画主题) · [参与开发](CONTRIBUTING.md) · [反馈问题](https://github.com/Liuhuazhong0801/Openlude/issues)
 
 ## 下载与安装
 
-当前版本为 **Openlude 0.6.2 预览版**，提供三个平台的安装包：
+当前版本为 **Openlude 1.0.0 正式版**，提供三个平台的安装包：
 
 | 平台 | 下载 | 安装方式 |
 | --- | --- | --- |
-| macOS · Apple Silicon（M 系列） | [DMG 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-arm64.dmg) · [ZIP](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-arm64.zip) | 打开 DMG，将 Openlude 拖入「应用程序」；也可解压 ZIP |
-| macOS · Intel | [DMG 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-x64.dmg) · [ZIP](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-macos-x64.zip) | 打开 DMG，将 Openlude 拖入「应用程序」；也可解压 ZIP |
-| Windows · 64 位 | [EXE 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/Openlude-0.6.2-windows-x64-setup.exe) | 运行安装向导，可选择安装目录 |
+| macOS · Apple Silicon（M 系列） | [DMG 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/Openlude-1.0.0-macos-arm64.dmg) · [ZIP](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/Openlude-1.0.0-macos-arm64.zip) | 打开 DMG，将 Openlude 拖入「应用程序」；也可解压 ZIP |
+| macOS · Intel | [DMG 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/Openlude-1.0.0-macos-x64.dmg) · [ZIP](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/Openlude-1.0.0-macos-x64.zip) | 打开 DMG，将 Openlude 拖入「应用程序」；也可解压 ZIP |
+| Windows · 64 位 | [EXE 安装包](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/Openlude-1.0.0-windows-x64-setup.exe) | 运行安装向导，可选择安装目录 |
 
-安装版无需安装 Node.js、开发工具或模型 API。Mac 预览包采用 ad-hoc 签名且未公证，Windows 预览包未做发布者签名，首次运行可能遇到系统安全提示。
+安装版无需安装 Node.js、开发工具或模型 API。项目采用普通安装包发行：Mac 使用 ad-hoc 签名且未公证，Windows 不做发布者签名，首次运行可能遇到系统安全提示。普通安装包也可以发布为正式版本，无需付费开发者账号。
 
-所有安装包均附有 [SHA-256 校验值](https://github.com/Liuhuazhong0801/Openlude/releases/download/v0.6.2/SHA256SUMS.txt)；发布页中的 `build-info-*.json` 记录版本、架构与源码提交。[完整发布说明](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v0.6.2)中列出了验证范围。
+所有安装包均附有 [SHA-256 校验值](https://github.com/Liuhuazhong0801/Openlude/releases/download/v1.0.0/SHA256SUMS.txt)；发布页中的 `build-info-*.json` 记录版本、架构与源码提交。[完整发布说明](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v1.0.0)中列出了验证范围。
 
 ## 工作台
 
@@ -77,13 +77,17 @@ Openlude 是一款适用于 macOS 和 Windows 的应用启动动画工具。添�
 | 从系统入口启动时播放动画 | Openlude 运行时检测已绑定应用的新启动，默认开启 |
 | 关闭工作台时 | 默认继续在后台运行，也可改为直接退出 |
 | 外观 | 默认跟随系统，也可固定为深色或浅色 |
-| 自动检查更新 | 默认开启，可手动检查、下载并选择重启安装；不会自动下载或中断工作 |
+| 自动检查更新 | 默认开启，也可手动检查；普通安装包版本提供下载页面入口，由用户下载安装 |
 
-**0.6.2 预览版通过本页手动下载安装，不进入正式自动更新通道。** 当前只发布了预览版，所以「检查更新」显示「尚未发布正式版本」属于正常状态。正式自动更新还需要签名、公证、更新元数据和真实跨版本升级验收。
+**1.0.0 采用普通安装包发行。** 应用会自动检查新的正式版本，发现更新后显示「下载安装包」，打开对应的 GitHub 发布页面。退出 Openlude 后安装新版，可保留本机配置；下载与安装均由用户决定。
+
+应用内下载和「重启安装」用于提供自动更新清单的发布；Mac 还需要相应的签名。默认的普通安装包不依赖这条更新路径。
 
 ## 配置与升级
 
 应用列表、绑定和偏好保存在本机；主题播放无需账号或模型 API，更新检查会访问 GitHub。应用移动导致原路径失效时，从列表移除并重新添加即可。
+
+从 0.6.2 预览版升级到 1.0.0，请从上方下载对应平台的安装包，退出 Openlude 后覆盖安装。
 
 从 TimeGate 升级时，若 Openlude 尚无配置，会复制原配置并保留旧文件。0.6.2 已移除「猫猫开门」与「深海鲸游」：旧绑定会先完整备份，再迁移为「星海列车」，保留应用与各自偏好。移除所有应用后，重启仍保持空列表。
 
@@ -94,7 +98,7 @@ Openlude 是一款适用于 macOS 和 Windows 的应用启动动画工具。添�
 复现当前发布版：
 
 ```sh
-git clone --branch v0.6.2 https://github.com/Liuhuazhong0801/Openlude.git
+git clone --branch v1.0.0 https://github.com/Liuhuazhong0801/Openlude.git
 cd Openlude
 npm ci
 npm run dev
@@ -108,7 +112,7 @@ npm run dev
 | 命令 | 用途 |
 | --- | --- |
 | `npm run build` | 类型检查并构建主进程、预加载、渲染界面与本机组件 |
-| `npm test` | 单元测试与正式发布前置条件检查；先运行构建 |
+| `npm test` | 配置、更新协议与打包检查；先运行构建 |
 | `npm run build:preview` | 生成单文件离线预览 `dist-preview/Openlude-preview.html` |
 | `npm run dev:site` | 本地预览 GitHub Pages 介绍网站 |
 | `npm run build:site` | 检查并构建介绍网站至 `dist-site/`；`main` 的网站改动通过 GitHub Actions 自动部署 |
@@ -118,18 +122,22 @@ npm run dev
 | `npm run test:external` | 在 macOS 验证系统入口启动检测与交接 |
 | `npm run test:windows-observer` | 在 Windows 验证真实进程、中文及空格路径、快捷方式和输入协议 |
 | `npm run test:regressions` | 检查写盘失败、视频取消、资源复用与高 DPI 渲染预算 |
+| `npm run test:updates` | 验证普通安装包的版本检查、下载入口与原有应用内更新路径 |
 | `npm run pack:mac` | 构建 macOS 本地 ad-hoc 签名 `.app` 测试包 |
 | `npm run pack:win` | 构建 Windows x64 NSIS 安装包 |
 | `npm run pack:preview -- --arch arm64` | 构建预览安装包；也可使用 `x64`，Windows 仅支持 `x64` |
-| `npm run pack:release` | 构建正式 Mac 包，要求 Developer ID 签名与 Apple 公证凭据 |
+| `npm run pack:release -- --arch arm64` | 构建普通安装包，无需开发者账号；Mac 支持 `arm64` / `x64`，Windows 支持 `x64` |
+| `npm run pack:release:signed` | 可选的 Mac Developer ID 签名与公证构建，需要相应凭据 |
 
 `pack:preview` 需先执行 `npm run build`，并在对应操作系统运行。Mac 输出 DMG 与 ZIP，Windows 输出 EXE，下载文件位于 `release/preview/<平台>-<架构>/downloads/`，附架构、源码提交和 SHA-256。打包命令不会自动发布 GitHub。
+
+`pack:release` 自动构建并生成相同格式的普通安装包，输出位于 `release/installers/<平台>-<架构>/downloads/`。CI 生成三个平台的安装包工件；GitHub Release 提供对应的五个安装文件、构建清单和统一校验文件。
 
 单文件预览包含八个主题、图标与媒体，可离线观看、切换和全屏播放；它只展示动效，原生窗口淡出和目标应用启动需在桌面应用中查看。预览测试前执行 `npx playwright install ffmpeg`。
 
 如果使用 HTTP 代理且 Electron 运行时下载失败，可在配置好代理后运行 `NODE_USE_ENV_PROXY=1 node node_modules/electron/install.js`；Windows PowerShell 先设置 `$env:NODE_USE_ENV_PROXY='1'`。代理凭证不应提交到仓库。
 
-正式自动更新使用 `electron-updater`，Mac 需提供 ZIP、DMG 和 `latest-mac.yml`，Windows 需提供 NSIS 安装包和 `latest.yml`，并保持应用身份与签名一致。`node scripts/pack-release.mjs --check` 可检查 Mac 正式发布的凭据前置条件。
+应用自动检查 GitHub 的正式 Release。没有当前平台的自动更新清单时，提供发布页面的安装包下载入口；有更新清单时可使用 `electron-updater`，仍需验证真实跨版本升级。Mac 的应用内自动安装需要签名、ZIP、DMG 与 `latest-mac.yml`；Windows 使用 NSIS 与 `latest.yml`。`node scripts/pack-release.mjs --check` 检查普通安装包的目标平台；额外指定 `--signed --check` 才检查 Mac 签名和公证凭据。
 
 ```text
 src/main/       应用启动、配置、系统入口检测与动画窗口生命周期
@@ -146,7 +154,7 @@ verification/   经过整理的验证记录
 
 ## 验证状态
 
-0.6.2 的 [发布 CI](https://github.com/Liuhuazhong0801/Openlude/actions/runs/42583271137) 五项任务全部通过：macOS / Windows 构建与 19 项单元测试，以及 Mac arm64、Mac x64、Windows x64 安装包构建。Windows 原生启动检测的 6 项检查通过，覆盖中文、空格路径及快捷方式。
+[发布 CI](https://github.com/Liuhuazhong0801/Openlude/actions/workflows/ci.yml) 验证 macOS / Windows 构建、单元测试、Windows 原生启动检测，以及 Mac arm64、Mac x64、Windows x64 安装包。1.0.0 还验证了普通安装包的版本检查与下载入口、视频静态封面和网站交互；本次构建提交及验证范围见 [1.0.0 发布说明](https://github.com/Liuhuazhong0801/Openlude/releases/tag/v1.0.0)。
 
 macOS Apple Silicon 已验证桌面播放与应用交接；**Mac Intel 和 Windows 的完整桌面行为仍需对应实机验收**。构建通过不代表各平台的窗口行为均已验证。详细覆盖范围、历史记录和性能检查见 [VERIFICATION.md](VERIFICATION.md)。
 

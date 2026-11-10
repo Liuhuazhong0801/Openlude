@@ -1,13 +1,15 @@
-import { app, net } from "electron";
+import { app, net, shell } from "electron";
 import { autoUpdater } from "electron-updater";
 import type { UpdateStatus } from "../shared/types";
+import { PROJECT_URL, parseStableRelease, hasNativeUpdateMetadata } from "./release-info";
 
-export const PROJECT_URL = "https://github.com/Liuhuazhong0801/Openlude";
+export { PROJECT_URL };
 const RELEASE_API = "https://api.github.com/repos/Liuhuazhong0801/Openlude/releases/latest";
 
 export class UpdateManager {
   status: UpdateStatus = { state: "idle", message: "" };
   private checking = false;
+  private manualDownloadPage?: string;
   private timer?: ReturnType<typeof setTimeout>;
   private interval?: ReturnType<typeof setInterval>;
 
@@ -40,6 +42,7 @@ export class UpdateManager {
   async check(): Promise<UpdateStatus> {
     if (this.checking || ["downloading", "ready"].includes(this.status.state)) return this.status;
     this.checking = true;
+    this.manualDownloadPage = undefined;
     this.set({ state: "checking", message: "正在检查更新…" });
     try {
       const response = await net.fetch(RELEASE_API, {
@@ -53,7 +56,15 @@ export class UpdateManager {
       } else if (!app.isPackaged) {
         this.set({ state: "development", message: "开发模式，请在安装版中更新" });
       } else {
-        await autoUpdater.checkForUpdates();
+        const release = parseStableRelease(await response.json());
+        if (autoUpdater.currentVersion.compare(release.version) >= 0) {
+          this.set({ state: "current", message: "已是最新版本" });
+        } else if (!hasNativeUpdateMetadata(release, process.platform)) {
+          this.manualDownloadPage = release.downloadPage;
+          this.set({ state: "available", manual: true, version: release.version, message: `发现新版本 ${release.version}，请下载安装包完成更新` });
+        } else {
+          await autoUpdater.checkForUpdates();
+        }
       }
     } catch {
       this.set({ state: "error", message: "无法检查更新，请稍后重试" });
@@ -63,6 +74,11 @@ export class UpdateManager {
 
   async download() {
     if (this.status.state !== "available") return;
+    if (this.manualDownloadPage) {
+      try { await shell.openExternal(this.manualDownloadPage); }
+      catch { this.set({ state: "error", message: "无法打开下载页面，请稍后重试" }); }
+      return;
+    }
     this.set({ ...this.status, state: "downloading", progress: 0, message: "正在下载 0%" });
     try { await autoUpdater.downloadUpdate(); }
     catch { this.set({ state: "error", message: "下载失败，请重新检查更新" }); }

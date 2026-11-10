@@ -111,6 +111,7 @@ export interface UpdateStatus {
   message: string;
   version?: string;
   progress?: number;
+  manual?: boolean;
 }
 export interface SavedState {
   version: 2;

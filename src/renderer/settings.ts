@@ -84,6 +84,7 @@ export function initializeSettings(initial: GeneralSettings, version: string, na
     $("#update-status").textContent = status.message;
     $<HTMLButtonElement>("#check-update").disabled = ["checking", "downloading", "ready"].includes(status.state);
     $("#download-update").hidden = status.state !== "available";
+    $("#download-update").textContent = status.manual ? "下载安装包" : "下载更新";
     $("#install-update").hidden = status.state !== "ready";
   };
   function showExternalStatus(status: ExternalLaunchStatus) {
