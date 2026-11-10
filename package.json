@@ -1,7 +1,7 @@
 {
   "name": "openlude",
   "productName": "Openlude",
-  "version": "0.6.2",
+  "version": "1.0.0",
   "private": true,
   "description": "A desktop launcher with procedural launch animations",
   "author": "Openlude",
@@ -11,7 +11,7 @@
     "build": "npm run typecheck && node scripts/build-native.mjs && tsc -p tsconfig.main.json && vite build",
     "start": "electron .",
     "dev": "npm run build && electron .",
-    "test": "node --test \"dist-electron/main/*.test.js\" scripts/pack-release.test.mjs",
+    "test": "node --test \"dist-electron/main/*.test.js\" scripts/pack-release.test.mjs scripts/site-release.test.mjs",
     "test:desktop": "node scripts/smoke.mjs",
     "build:preview": "node scripts/build-preview.mjs",
     "dev:site": "npm run build:site && vite preview --config site/vite.config.mts --host 127.0.0.1 --port 4174",
@@ -23,9 +23,11 @@
     "pack:win": "npm run build && electron-builder --win nsis --x64 --publish never",
     "pack:preview": "node scripts/pack-preview.mjs",
     "pack:release": "npm run build && node scripts/pack-release.mjs",
+    "pack:release:signed": "npm run pack:release -- --signed",
     "test:external": "node scripts/external-launch-smoke.mjs",
     "test:windows-observer": "node scripts/windows-observer-smoke.mjs",
     "test:regressions": "node scripts/regression-smoke.mjs",
+    "test:updates": "node scripts/update-smoke.mjs",
     "assets:thumbnails": "node scripts/build-thumbnails.mjs"
   },
   "dependencies": {

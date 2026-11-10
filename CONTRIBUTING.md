@@ -34,6 +34,8 @@ Pull Request 说明修改的问题、实现后的行为、实际验证结果和�
 
 提交源码、必要素材、依赖锁文件和经过整理的验证记录。依赖目录、缓存、个人环境配置、安装包与临时测试输出由 `.gitignore` 排除。
 
-公开发布前应另行确定代码许可、应用签名、公证与 Release 产物；CI 检查通过后生成预览安装包工件；GitHub Release 的公开发布仍需项目所有者明确授权。使用 `npm run build` 后运行 `npm run pack:preview -- --arch arm64` 或 `x64` 构建预览包，正式 Mac 发布继续使用有证书、公证检查的 `pack:release`。
+默认通过普通安装包发行，正式版本不以付费开发者签名或公证为前提。运行 `npm run pack:release -- --arch arm64` 或 `x64` 构建安装包；Mac 输出 DMG / ZIP，Windows x64 输出 EXE，附构建信息与 SHA-256。CI 生成三个平台的安装包工件；GitHub Release 的公开发布仍需项目所有者明确授权。带 Developer ID 签名及公证的 Mac 构建保留为可选命令 `npm run pack:release:signed`。
+
+网站部署前会检查目标正式 Release 的五个安装包、校验文件与三个构建清单是否已发布。准备新版本但下载尚未发布时，线上网站保持原版本；发布完成后，从 `main` 手动触发 Website 工作流，更新网站下载入口。
 
 主题缩略图由 `npm run assets:thumbnails` 生成，生成任务需要 Chrome。更换主题封面后，提交对应缩略图与 `thumbnails/manifest.json`；不要让主题栏直接引用全尺寸原图。
